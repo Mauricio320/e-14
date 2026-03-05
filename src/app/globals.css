@@ -33,3 +33,10 @@ textarea {
   outline: none;
   color: var(--color-gray-700);
 }
+select {
+  color: var(--color-gray-700);
+}
+
+option {
+  color: var(--color-gray-700);
+}

@@ -136,6 +136,43 @@ export async function obtenerActasPorEstado(
   return (data as ActaConRelaciones[]) || [];
 }
 
+export async function obtenerEstadoPuesto(
+  puestoId: string,
+  estado?: EstadoActa,
+): Promise<ActaConRelaciones[]> {
+  const query = supabase
+    .from("actas_e14")
+    .select(
+      `
+      *,
+      mesa:mesa_id!inner (
+        *,
+        puesto:puesto_id (
+          *,
+          municipio:municipio_id (*)
+        )
+      ),
+      registradoPor:registrado_por (*),
+      verificadoPor:verificado_por (*)
+    `,
+    )
+    .eq("mesa.puesto_id", puestoId);
+
+  if (estado) query.eq("estado", estado);
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  const actas = (data as ActaConRelaciones[]) || [];
+
+  // Ordenar descendentemente por número de mesa en memoria
+  return actas.sort((a, b) => {
+    const numA = a.mesa?.numero_mesa || 0;
+    const numB = b.mesa?.numero_mesa || 0;
+    return numB - numA;
+  });
+}
+
 export async function crearActa(acta: Partial<ActaE14>): Promise<ActaE14> {
   // Obtener el usuario actual para incluir registrado_por
   const { data: userData } = await supabase.auth.getUser();

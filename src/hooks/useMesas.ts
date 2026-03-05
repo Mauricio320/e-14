@@ -10,6 +10,7 @@ import {
   asignarTestigoAMesa,
   desasignarTestigoDeMesa,
   obtenerAsignacionesPorPuesto,
+  obtenerMesasConActasPorPuesto,
 } from "@/servicios/mesas";
 import type { Mesa } from "@/types";
 
@@ -35,6 +36,14 @@ export function useMesasPorPuesto(puestoId: string) {
     queryKey: [MESAS_KEY, "puesto", puestoId],
     queryFn: () => obtenerMesasPorPuesto(puestoId),
     enabled: !!puestoId,
+  });
+}
+
+export function useMesasConActasPorPuesto(puestoId: string) {
+  return useQuery({
+    queryKey: [MESAS_KEY, "puesto", puestoId, "con_actas"],
+    queryFn: () => obtenerMesasConActasPorPuesto(puestoId),
+    enabled: false, // Se dispara manualmente con refetch
   });
 }
 
