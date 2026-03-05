@@ -152,8 +152,8 @@ export function BloqueEvidencia({
 
     // Validar límite total
     const totalFotos = fotos.length + fotosExistentes.length + nuevosArchivos.length
-    if (totalFotos > 18) {
-      setError('Máximo 18 fotos por acta. Elimine algunas fotos para continuar.')
+    if (totalFotos > 14) {
+      setError('Máximo 14 fotos por acta. Elimine algunas fotos para continuar.')
       return
     }
 
@@ -242,7 +242,7 @@ export function BloqueEvidencia({
       <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <h3 className="font-medium text-gray-900">Evidencia Fotográfica</h3>
         <span className="text-sm text-gray-500">
-          {fotosExistentes.length + fotos.length} / 18 fotos
+          {fotosExistentes.length + fotos.length} / 14 fotos
         </span>
       </div>
 
@@ -299,7 +299,7 @@ export function BloqueEvidencia({
                   Toca aquí para tomar foto
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  {fotos.length + fotosExistentes.length} de 18 fotos
+                  {fotos.length + fotosExistentes.length} de 14 fotos
                 </p>
                 {globalCompressing && (
                   <p className="mt-2 text-xs text-blue-600 font-medium">
@@ -346,7 +346,7 @@ export function BloqueEvidencia({
                   </label>
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  JPG, PNG o WebP. Máximo 10MB por archivo (se comprimirán automáticamente). Máximo 18 fotos.
+                  JPG, PNG o WebP. Máximo 10MB por archivo (se comprimirán automáticamente). Máximo 14 fotos.
                 </p>
                 {globalCompressing && (
                   <p className="mt-2 text-xs text-blue-600 font-medium">

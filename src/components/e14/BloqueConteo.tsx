@@ -49,6 +49,62 @@ export function BloqueConteo({
 
   return (
     <div className="space-y-6">
+      {/* Nivelación de la Mesa - según formato E-14 */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+          <h3 className="font-medium text-gray-900">Nivelación de la Mesa</h3>
+        </div>
+
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Total Volantes Formulario E-11
+            </label>
+            <input
+              {...register("totalVolantesE11", { valueAsNumber: true })}
+              type="number"
+              min="0"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              disabled={disabled}
+              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              placeholder="0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Total Votos de Cámara en la Urna
+            </label>
+            <input
+              {...register("totalVotosUrna", { valueAsNumber: true })}
+              type="number"
+              min="0"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              disabled={disabled}
+              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              placeholder="0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Total Votos Incinerados
+            </label>
+            <input
+              {...register("totalVotosIncinerados", { valueAsNumber: true })}
+              type="number"
+              min="0"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              disabled={disabled}
+              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              placeholder="0"
+            />
+          </div>
+        </div>
+      </div>
       {/* Votos por partido y candidato */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
@@ -56,7 +112,6 @@ export function BloqueConteo({
             Votos por Partido / Candidato
           </h3>
         </div>
-
         <div className="divide-y divide-gray-200">
           {Object.entries(candidatosPorPartido).map(
             ([partidoId, { partido, candidatos: cands }]) => (
@@ -211,63 +266,6 @@ export function BloqueConteo({
             </label>
             <input
               {...register("totalVotosMesa", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Nivelación de la Mesa - según formato E-14 */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-          <h3 className="font-medium text-gray-900">Nivelación de la Mesa</h3>
-        </div>
-
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Total Volantes Formulario E-11
-            </label>
-            <input
-              {...register("totalVolantesE11", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Total Votos de Cámara en la Urna
-            </label>
-            <input
-              {...register("totalVotosUrna", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Total Votos Incinerados
-            </label>
-            <input
-              {...register("totalVotosIncinerados", { valueAsNumber: true })}
               type="number"
               min="0"
               inputMode="numeric"
