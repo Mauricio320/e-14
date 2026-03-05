@@ -1,7 +1,7 @@
-import type { MesaConRelaciones } from '@/types'
+import type { MesaConRelaciones } from "@/types";
 
 interface BloqueIdentificacionProps {
-  mesa: MesaConRelaciones
+  mesa: MesaConRelaciones;
 }
 
 export function BloqueIdentificacion({ mesa }: BloqueIdentificacionProps) {
@@ -11,13 +11,13 @@ export function BloqueIdentificacion({ mesa }: BloqueIdentificacionProps) {
         <h3 className="font-medium text-gray-900">Identificación del Acta</h3>
       </div>
 
-      <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Municipio
           </label>
           <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
-            {mesa.puesto?.municipio?.nombre || 'No disponible'}
+            {mesa.puesto?.municipio?.nombre || "No disponible"}
           </div>
         </div>
 
@@ -26,7 +26,7 @@ export function BloqueIdentificacion({ mesa }: BloqueIdentificacionProps) {
             Puesto de Votación
           </label>
           <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
-            {mesa.puesto?.nombre || 'No disponible'}
+            {mesa.puesto?.nombre || "No disponible"}
           </div>
         </div>
 
@@ -35,7 +35,7 @@ export function BloqueIdentificacion({ mesa }: BloqueIdentificacionProps) {
             Zona
           </label>
           <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 capitalize">
-            {mesa.puesto?.zona || 'No disponible'}
+            {mesa.puesto?.zona || "No disponible"}
           </div>
         </div>
 
@@ -53,19 +53,10 @@ export function BloqueIdentificacion({ mesa }: BloqueIdentificacionProps) {
             Dirección
           </label>
           <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 text-sm">
-            {mesa.puesto?.direccion || 'No disponible'}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Potencial Electoral
-          </label>
-          <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
-            {mesa.potencial_electoral} votantes
+            {mesa.puesto?.direccion || "No disponible"}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

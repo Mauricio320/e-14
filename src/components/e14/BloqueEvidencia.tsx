@@ -1,70 +1,88 @@
-'use client'
+"use client";
 
-import { useState, useCallback, useEffect } from 'react'
-import type { FotoActa } from '@/types'
-import { comprimirImagen, formatFileSize, type CompressionResult } from '@/lib/image-compression'
+import { useState, useCallback, useEffect } from "react";
+import type { FotoActa } from "@/types";
+import {
+  comprimirImagen,
+  formatFileSize,
+  type CompressionResult,
+} from "@/lib/image-compression";
 
 // Hook para detectar si es dispositivo móvil
 function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
-      const userAgent = navigator.userAgent.toLowerCase()
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent)
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-      const isSmallScreen = window.innerWidth < 768
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice =
+        /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(
+          userAgent,
+        );
+      const isTouchDevice =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
 
       // Consideramos móvil si es un dispositivo móvil detectado por user agent
       // O si es touch y pantalla pequeña
-      setIsMobile(isMobileDevice || (isTouchDevice && isSmallScreen))
-    }
+      setIsMobile(isMobileDevice || (isTouchDevice && isSmallScreen));
+    };
 
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
-  return isMobile
+  return isMobile;
 }
 
 // Obtener la URL base de Supabase desde las variables de entorno
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 // Construir URL pública de la foto
 function construirUrlPublica(foto: FotoActa): string {
   // Si ya tiene URL pública guardada, usarla
   if (foto.url_publica) {
-    return foto.url_publica
+    return foto.url_publica;
   }
 
   // Si no hay URL de Supabase configurada, mostrar error
   if (!SUPABASE_URL) {
-    console.error('NEXT_PUBLIC_SUPABASE_URL no está configurada')
-    return ''
+    console.error("NEXT_PUBLIC_SUPABASE_URL no está configurada");
+    return "";
   }
 
   // Construir URL completa
-  return `${SUPABASE_URL}/storage/v1/object/public/actas-e14/${foto.storage_path}`
+  return `${SUPABASE_URL}/storage/v1/object/public/actas-e14/${foto.storage_path}`;
 }
 
 // Componente para mostrar foto usando URL guardada en BD
 function FotoItem({ foto }: { foto: FotoActa }) {
-  const [error, setError] = useState(false)
-  const url = construirUrlPublica(foto)
+  const [error, setError] = useState(false);
+  const url = construirUrlPublica(foto);
 
   // Si no hay URL válida, mostrar placeholder
   if (!url) {
     return (
       <div className="aspect-square bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
         <div className="text-center p-2">
-          <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <svg
+            className="mx-auto h-8 w-8 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
           </svg>
           <p className="text-xs text-gray-500 mt-1">Error de configuración</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -72,8 +90,18 @@ function FotoItem({ foto }: { foto: FotoActa }) {
       {error ? (
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-center p-2">
-            <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="mx-auto h-8 w-8 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             <p className="text-xs text-gray-500 mt-1">No se pudo cargar</p>
           </div>
@@ -88,21 +116,21 @@ function FotoItem({ foto }: { foto: FotoActa }) {
         />
       )}
     </div>
-  )
+  );
 }
 
 interface FotoConCompression {
-  file: File
-  compression: CompressionResult | null
-  isCompressing: boolean
+  file: File;
+  compression: CompressionResult | null;
+  isCompressing: boolean;
 }
 
 interface BloqueEvidenciaProps {
-  actaId?: string
-  fotos: File[]
-  setFotos: (fotos: File[]) => void
-  disabled?: boolean
-  fotosExistentes?: FotoActa[]
+  actaId?: string;
+  fotos: File[];
+  setFotos: (fotos: File[]) => void;
+  disabled?: boolean;
+  fotosExistentes?: FotoActa[];
 }
 
 export function BloqueEvidencia({
@@ -111,136 +139,152 @@ export function BloqueEvidencia({
   disabled = false,
   fotosExistentes = [],
 }: BloqueEvidenciaProps) {
-  const [isDragging, setIsDragging] = useState(false)
-  const [error, setError] = useState('')
-  const [fotosInfo, setFotosInfo] = useState<Map<number, FotoConCompression>>(new Map())
-  const [globalCompressing, setGlobalCompressing] = useState(false)
-  const isMobile = useIsMobile()
+  const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState("");
+  const [fotosInfo, setFotosInfo] = useState<Map<number, FotoConCompression>>(
+    new Map(),
+  );
+  const [globalCompressing, setGlobalCompressing] = useState(false);
+  const isMobile = useIsMobile();
 
   const validarArchivo = (file: File): boolean => {
     // Validar tipo
-    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp']
+    const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
     if (!tiposPermitidos.includes(file.type)) {
-      setError(`El archivo "${file.name}" no es una imagen válida. Use JPG, PNG o WebP.`)
-      return false
+      setError(
+        `El archivo "${file.name}" no es una imagen válida. Use JPG, PNG o WebP.`,
+      );
+      return false;
     }
 
     // Validar tamaño (10MB antes de compresion - permitimos mas porque se va a comprimir)
-    const maxSize = 10 * 1024 * 1024
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError(`El archivo "${file.name}" excede el límite de 10MB.`)
-      return false
+      setError(`El archivo "${file.name}" excede el límite de 10MB.`);
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
-  const handleFileSelect = useCallback(async (files: FileList | null) => {
-    setError('')
+  const handleFileSelect = useCallback(
+    async (files: FileList | null) => {
+      setError("");
 
-    if (!files) return
+      if (!files) return;
 
-    const nuevosArchivos: File[] = []
+      const nuevosArchivos: File[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
 
-      if (validarArchivo(file)) {
-        nuevosArchivos.push(file)
+        if (validarArchivo(file)) {
+          nuevosArchivos.push(file);
+        }
       }
-    }
 
-    // Validar límite total
-    const totalFotos = fotos.length + fotosExistentes.length + nuevosArchivos.length
-    if (totalFotos > 14) {
-      setError('Máximo 14 fotos por acta. Elimine algunas fotos para continuar.')
-      return
-    }
+      // Validar límite total
+      const totalFotos =
+        fotos.length + fotosExistentes.length + nuevosArchivos.length;
+      if (totalFotos > 14) {
+        setError(
+          "Máximo 14 fotos por acta. Elimine algunas fotos para continuar.",
+        );
+        return;
+      }
 
-    // Comprimir fotos antes de agregarlas
-    setGlobalCompressing(true)
-    const comprimidos: File[] = []
-    const nuevosInfo = new Map(fotosInfo)
+      // Comprimir fotos antes de agregarlas
+      setGlobalCompressing(true);
+      const comprimidos: File[] = [];
+      const nuevosInfo = new Map(fotosInfo);
 
-    // Inicializar estado de compresion para cada foto
-    const startIndex = fotos.length
-    nuevosArchivos.forEach((file, idx) => {
-      nuevosInfo.set(startIndex + idx, {
-        file,
-        compression: null,
-        isCompressing: true,
-      })
-    })
-    setFotosInfo(nuevosInfo)
+      // Inicializar estado de compresion para cada foto
+      const startIndex = fotos.length;
+      nuevosArchivos.forEach((file, idx) => {
+        nuevosInfo.set(startIndex + idx, {
+          file,
+          compression: null,
+          isCompressing: true,
+        });
+      });
+      setFotosInfo(nuevosInfo);
 
-    // Comprimir en paralelo
-    const resultados = await Promise.all(
-      nuevosArchivos.map(async (file, idx) => {
-        const compression = await comprimirImagen(file)
-        return { idx: startIndex + idx, compression }
-      })
-    )
+      // Comprimir en paralelo
+      const resultados = await Promise.all(
+        nuevosArchivos.map(async (file, idx) => {
+          const compression = await comprimirImagen(file);
+          return { idx: startIndex + idx, compression };
+        }),
+      );
 
-    // Actualizar estado con resultados
-    const finalInfo = new Map(nuevosInfo)
-    resultados.forEach(({ idx, compression }) => {
-      finalInfo.set(idx, {
-        file: compression.file,
-        compression,
-        isCompressing: false,
-      })
-      comprimidos.push(compression.file)
-    })
-    setFotosInfo(finalInfo)
-    setGlobalCompressing(false)
+      // Actualizar estado con resultados
+      const finalInfo = new Map(nuevosInfo);
+      resultados.forEach(({ idx, compression }) => {
+        finalInfo.set(idx, {
+          file: compression.file,
+          compression,
+          isCompressing: false,
+        });
+        comprimidos.push(compression.file);
+      });
+      setFotosInfo(finalInfo);
+      setGlobalCompressing(false);
 
-    // Usar el estado anterior a través de una referencia temporal
-    const nuevasFotos = [...fotos, ...comprimidos]
-    setFotos(nuevasFotos)
-  }, [fotos, fotosExistentes.length, setFotos, fotosInfo])
+      // Usar el estado anterior a través de una referencia temporal
+      const nuevasFotos = [...fotos, ...comprimidos];
+      setFotos(nuevasFotos);
+    },
+    [fotos, fotosExistentes.length, setFotos, fotosInfo],
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    handleFileSelect(e.dataTransfer.files)
-  }, [handleFileSelect])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      handleFileSelect(e.dataTransfer.files);
+    },
+    [handleFileSelect],
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
 
-  const eliminarFoto = useCallback((index: number) => {
-    const nuevasFotos = [...fotos]
-    nuevasFotos.splice(index, 1)
-    setFotos(nuevasFotos)
+  const eliminarFoto = useCallback(
+    (index: number) => {
+      const nuevasFotos = [...fotos];
+      nuevasFotos.splice(index, 1);
+      setFotos(nuevasFotos);
 
-    // Actualizar map de info
-    setFotosInfo(prev => {
-      const nuevoInfo = new Map(prev)
-      nuevoInfo.delete(index)
-      // Reindexar entradas posteriores
-      const reindexed = new Map<number, FotoConCompression>()
-      nuevoInfo.forEach((value, key) => {
-        if (key > index) {
-          reindexed.set(key - 1, value)
-        } else {
-          reindexed.set(key, value)
-        }
-      })
-      return reindexed
-    })
-  }, [setFotos])
+      // Actualizar map de info
+      setFotosInfo((prev) => {
+        const nuevoInfo = new Map(prev);
+        nuevoInfo.delete(index);
+        // Reindexar entradas posteriores
+        const reindexed = new Map<number, FotoConCompression>();
+        nuevoInfo.forEach((value, key) => {
+          if (key > index) {
+            reindexed.set(key - 1, value);
+          } else {
+            reindexed.set(key, value);
+          }
+        });
+        return reindexed;
+      });
+    },
+    [setFotos],
+  );
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="font-medium text-gray-900">Evidencia Fotográfica</h3>
+        <h3 className="font-medium text-gray-900">Fotos E-14</h3>
         <span className="text-sm text-gray-500">
           {fotosExistentes.length + fotos.length} / 14 fotos
         </span>
@@ -250,13 +294,19 @@ export function BloqueEvidencia({
         {/* Fotos existentes */}
         {fotosExistentes.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Fotos ya subidas:</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              Fotos ya subidas:
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {fotosExistentes.map((foto) => (
                 <div key={foto.id} className="relative group">
                   <FotoItem foto={foto} />
-                  <p className="text-xs text-gray-500 mt-1 truncate">{foto.nombre_archivo}</p>
-                  <p className="text-xs text-gray-400">{formatFileSize(foto.tamanio_bytes || 0)}</p>
+                  <p className="text-xs text-gray-500 mt-1 truncate">
+                    {foto.nombre_archivo}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {formatFileSize(foto.tamanio_bytes || 0)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -315,8 +365,8 @@ export function BloqueEvidencia({
                 onDragLeave={handleDragLeave}
                 className={`border-2 border-dashed rounded-lg p-6 md:p-8 text-center transition-colors min-h-[120px] flex flex-col items-center justify-center ${
                   isDragging
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:border-gray-400"
                 }`}
               >
                 <svg
@@ -333,7 +383,7 @@ export function BloqueEvidencia({
                   />
                 </svg>
                 <p className="mt-2 text-sm text-gray-600">
-                  Arrastre y suelte fotos aquí, o{' '}
+                  Arrastre y suelte fotos aquí, o{" "}
                   <label className="text-blue-600 hover:text-blue-500 cursor-pointer font-medium">
                     seleccione archivos
                     <input
@@ -346,7 +396,8 @@ export function BloqueEvidencia({
                   </label>
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  JPG, PNG o WebP. Máximo 10MB por archivo (se comprimirán automáticamente). Máximo 14 fotos.
+                  JPG, PNG o WebP. Máximo 10MB por archivo (se comprimirán
+                  automáticamente). Máximo 14 fotos.
                 </p>
                 {globalCompressing && (
                   <p className="mt-2 text-xs text-blue-600 font-medium">
@@ -366,13 +417,15 @@ export function BloqueEvidencia({
             {/* Previews de fotos nuevas - Grid 2 columnas en mobile */}
             {fotos.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Fotos a subir:</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Fotos a subir:
+                </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {fotos.map((foto, index) => {
-                    const info = fotosInfo.get(index)
-                    const isCompressing = info?.isCompressing ?? false
-                    const compression = info?.compression
-                    const wasCompressed = compression?.wasCompressed ?? false
+                    const info = fotosInfo.get(index);
+                    const isCompressing = info?.isCompressing ?? false;
+                    const compression = info?.compression;
+                    const wasCompressed = compression?.wasCompressed ?? false;
 
                     return (
                       <div key={index} className="relative group">
@@ -385,14 +438,28 @@ export function BloqueEvidencia({
                           {isCompressing && (
                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                               <div className="text-center text-white">
-                                <svg className="animate-spin h-5 w-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                <svg
+                                  className="animate-spin h-5 w-5 mx-auto mb-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  />
                                 </svg>
                                 <p className="text-xs">Comprimiendo...</p>
                               </div>
                             </div>
-                            
                           )}
                           {wasCompressed && !isCompressing && (
                             <div className="absolute top-1 right-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
@@ -406,23 +473,43 @@ export function BloqueEvidencia({
                           className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
                           aria-label="Eliminar foto"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
-                        <p className="text-xs text-gray-500 mt-1 truncate">{foto.name}</p>
+                        <p className="text-xs text-gray-500 mt-1 truncate">
+                          {foto.name}
+                        </p>
                         <div className="flex items-center gap-1">
                           {wasCompressed ? (
                             <>
-                              <span className="text-xs text-gray-400 line-through">{formatFileSize(compression?.originalSize ?? 0)}</span>
-                              <span className="text-xs text-green-600 font-medium">{formatFileSize(compression?.compressedSize ?? 0)}</span>
+                              <span className="text-xs text-gray-400 line-through">
+                                {formatFileSize(compression?.originalSize ?? 0)}
+                              </span>
+                              <span className="text-xs text-green-600 font-medium">
+                                {formatFileSize(
+                                  compression?.compressedSize ?? 0,
+                                )}
+                              </span>
                             </>
                           ) : (
-                            <span className="text-xs text-gray-400">{formatFileSize(foto.size)}</span>
+                            <span className="text-xs text-gray-400">
+                              {formatFileSize(foto.size)}
+                            </span>
                           )}
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -431,5 +518,5 @@ export function BloqueEvidencia({
         )}
       </div>
     </div>
-  )
+  );
 }

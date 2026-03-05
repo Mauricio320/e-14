@@ -42,11 +42,12 @@ async function fetchMesaData(mesaId: string): Promise<MesaData> {
       `
       *,
       votos:votos_candidato (*),
+      votosLista:votos_lista (*),
       fotos:fotos_acta (*)
     `,
     )
     .eq("mesa_id", mesaId)
-    .order("version", { ascending: false })
+    .order("version", { ascending: true })
     .maybeSingle();
 
   if (actaError) throw actaError;

@@ -1,160 +1,179 @@
-import { createClient } from '@/lib/supabase/client'
-import type { Mesa, MesaConRelaciones, TestigoMesa, Profile } from '@/types'
+import { createClient } from "@/lib/supabase/client";
+import type { Mesa, MesaConRelaciones, TestigoMesa, Profile } from "@/types";
 
-const supabase = createClient()
+const supabase = createClient();
 
 export interface TestigoMesaConTestigo extends TestigoMesa {
-  testigo: Profile
+  testigo: Profile;
 }
 
 export async function obtenerMesas(): Promise<MesaConRelaciones[]> {
   const { data, error } = await supabase
-    .from('mesas')
-    .select(`
+    .from("mesas")
+    .select(
+      `
       *,
       puesto:puesto_id (
         *,
         municipio:municipio_id (*)
       )
-    `)
-    .order('numero_mesa')
+    `,
+    )
+    .order("numero_mesa");
 
-  if (error) throw error
-  return data as MesaConRelaciones[] || []
+  if (error) throw error;
+  return (data as MesaConRelaciones[]) || [];
 }
 
-export async function obtenerMesaPorId(id: string): Promise<MesaConRelaciones | null> {
+export async function obtenerMesaPorId(
+  id: string,
+): Promise<MesaConRelaciones | null> {
   const { data, error } = await supabase
-    .from('mesas')
-    .select(`
+    .from("mesas")
+    .select(
+      `
       *,
       puesto:puesto_id (
         *,
         municipio:municipio_id (*)
       )
-    `)
-    .eq('id', id)
-    .single()
+    `,
+    )
+    .eq("id", id)
+    .single();
 
-  if (error) return null
-  return data as MesaConRelaciones
+  if (error) return null;
+  return data as MesaConRelaciones;
 }
 
-export async function obtenerMesasPorPuesto(puestoId: string): Promise<MesaConRelaciones[]> {
+export async function obtenerMesasPorPuesto(
+  puestoId: string,
+): Promise<MesaConRelaciones[]> {
   const { data, error } = await supabase
-    .from('mesas')
-    .select(`
+    .from("mesas")
+    .select(
+      `
       *,
       puesto:puesto_id (
         *,
         municipio:municipio_id (*)
       )
-    `)
-    .eq('puesto_id', puestoId)
-    .order('numero_mesa')
+    `,
+    )
+    .eq("puesto_id", puestoId)
+    .order("numero_mesa");
 
-  if (error) throw error
-  return data as MesaConRelaciones[] || []
+  if (error) throw error;
+  return (data as MesaConRelaciones[]) || [];
 }
 
-export async function obtenerMesasPorTestigo(testigoId: string): Promise<MesaConRelaciones[]> {
+export async function obtenerMesasPorTestigo(
+  testigoId: string,
+): Promise<MesaConRelaciones[]> {
   const { data, error } = await supabase
-    .from('testigo_mesas')
-    .select(`
+    .from("testigo_mesas")
+    .select(
+      `
       mesa:mesa_id (
         *,
         puesto:puesto_id (
           *,
           municipio:municipio_id (*)
-        )
+        ),
+       actas_e14(estado)
       )
-    `)
-    .eq('testigo_id', testigoId)
+    `,
+    )
+    .eq("testigo_id", testigoId);
 
-  if (error) throw error
+  if (error) throw error;
 
-  return (data as unknown as Array<{ mesa: MesaConRelaciones }>)
-    .map(item => item.mesa) || []
+  return (
+    (data as unknown as Array<{ mesa: MesaConRelaciones }>).map(
+      (item) => item.mesa,
+    ) || []
+  );
 }
 
 export async function crearMesa(mesa: Partial<Mesa>): Promise<Mesa> {
   const { data, error } = await supabase
-    .from('mesas')
+    .from("mesas")
     .insert(mesa as never)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data as Mesa
+  if (error) throw error;
+  return data as Mesa;
 }
 
 export async function actualizarMesa(
   id: string,
-  mesa: Partial<Mesa>
+  mesa: Partial<Mesa>,
 ): Promise<Mesa> {
   const { data, error } = await supabase
-    .from('mesas')
+    .from("mesas")
     .update(mesa as never)
-    .eq('id', id)
+    .eq("id", id)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data as Mesa
+  if (error) throw error;
+  return data as Mesa;
 }
 
 export async function eliminarMesa(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('mesas')
-    .delete()
-    .eq('id', id)
+  const { error } = await supabase.from("mesas").delete().eq("id", id);
 
-  if (error) throw error
+  if (error) throw error;
 }
 
 export async function asignarTestigoAMesa(
   testigoId: string,
-  mesaId: string
+  mesaId: string,
 ): Promise<TestigoMesa> {
-  const { data: userData } = await supabase.auth.getUser()
+  const { data: userData } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
-    .from('testigo_mesas')
+    .from("testigo_mesas")
     .insert({
       testigo_id: testigoId,
       mesa_id: mesaId,
       asignado_por: userData.user?.id,
     } as never)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data as TestigoMesa
+  if (error) throw error;
+  return data as TestigoMesa;
 }
 
 export async function desasignarTestigoDeMesa(
   testigoId: string,
-  mesaId: string
+  mesaId: string,
 ): Promise<void> {
   const { error } = await supabase
-    .from('testigo_mesas')
+    .from("testigo_mesas")
     .delete()
-    .eq('testigo_id', testigoId)
-    .eq('mesa_id', mesaId)
+    .eq("testigo_id", testigoId)
+    .eq("mesa_id", mesaId);
 
-  if (error) throw error
+  if (error) throw error;
 }
 
-export async function obtenerAsignacionesPorPuesto(puestoId: string): Promise<TestigoMesaConTestigo[]> {
+export async function obtenerAsignacionesPorPuesto(
+  puestoId: string,
+): Promise<TestigoMesaConTestigo[]> {
   const { data, error } = await supabase
-    .from('testigo_mesas')
-    .select(`
+    .from("testigo_mesas")
+    .select(
+      `
       *,
       mesa:mesa_id (*),
       testigo:testigo_id (*)
-    `)
-    .eq('mesa.puesto_id', puestoId)
+    `,
+    )
+    .eq("mesa.puesto_id", puestoId);
 
-  if (error) throw error
-  return (data as unknown as TestigoMesaConTestigo[]) || []
+  if (error) throw error;
+  return (data as unknown as TestigoMesaConTestigo[]) || [];
 }

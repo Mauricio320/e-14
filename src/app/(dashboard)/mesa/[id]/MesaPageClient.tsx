@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { FormularioE14 } from '@/components/e14/FormularioE14'
+import { PageHeader } from '@/components/layout/PageHeader'
 import { useMesaData } from '@/hooks/useMesaData'
 import { useUserRole } from '@/hooks/useUserRole'
 
@@ -52,14 +53,10 @@ export function MesaPageClient({ mesaId }: MesaPageClientProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-4 lg:mb-6">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-          Acta E-14 - Mesa {mesa.numero_mesa}
-        </h1>
-        <p className="text-sm lg:text-base text-gray-600 mt-1">
-          {mesa.puesto?.nombre} • {mesa.puesto?.municipio?.nombre}
-        </p>
-      </div>
+      <PageHeader
+        title={`Acta E-14 - Mesa ${mesa.numero_mesa}`}
+        subtitle={`${mesa.puesto?.nombre} • ${mesa.puesto?.municipio?.nombre}`}
+      />
 
       <FormularioE14
         mesa={mesa}

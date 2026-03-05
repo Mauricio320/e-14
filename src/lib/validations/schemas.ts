@@ -9,11 +9,22 @@ export const votoCandidatoSchema = z.object({
     .max(1000, 'Número de votos excede el límite razonable'),
 })
 
+// Esquema para votos por lista (total por partido)
+export const votoListaSchema = z.object({
+  partidoId: z.string().uuid('ID de partido inválido'),
+  votos: z.number()
+    .int('Los votos deben ser un número entero')
+    .min(0, 'Los votos no pueden ser negativos')
+    .max(1000, 'Número de votos excede el límite razonable'),
+})
+
 // Esquema para el acta E-14 completa
 export const actaE14Schema = z.object({
   mesaId: z.string().uuid('Seleccione una mesa válida'),
   votos: z.array(votoCandidatoSchema)
     .min(1, 'Debe ingresar al menos un voto'),
+  votosPorLista: z.array(votoListaSchema)
+    .min(1, 'Debe ingresar los votos por lista'),
   totalVolantesE11: z.number()
     .int('Debe ser un número entero')
     .min(0, 'No puede ser negativo'),
@@ -43,6 +54,18 @@ export const actaE14Schema = z.object({
     .min(0, 'No puede ser negativo'),
   observaciones: z.string()
     .max(1000, 'Máximo 1000 caracteres')
+    .optional(),
+  tieneTachaduras: z.boolean(),
+  huboReconteo: z.boolean(),
+  huboReclamacion: z.boolean(),
+  tipoReclamacion: z.enum([
+    'error_aritmetico',
+    'firmas_insuficientes',
+    'sufragantes_excede_habilitados',
+  ]).optional(),
+  totalVotosLista: z.number()
+    .int('Debe ser un número entero')
+    .min(0, 'No puede ser negativo')
     .optional(),
 })
 
@@ -141,6 +164,7 @@ export const mesaSchema = z.object({
 
 // Tipos inferidos
 export type VotoCandidatoInput = z.infer<typeof votoCandidatoSchema>
+export type VotoListaInput = z.infer<typeof votoListaSchema>
 export type ActaE14Input = z.infer<typeof actaE14Schema>
 export type FotoActaInput = z.infer<typeof fotoActaSchema>
 export type LoginInput = z.infer<typeof loginSchema>

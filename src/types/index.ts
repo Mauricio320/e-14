@@ -13,6 +13,7 @@ export type Partido = Database['public']['Tables']['partidos']['Row']
 export type Candidato = Database['public']['Tables']['candidatos']['Row']
 export type ActaE14 = Database['public']['Tables']['actas_e14']['Row']
 export type VotoCandidato = Database['public']['Tables']['votos_candidato']['Row']
+export type VotoLista = Database['public']['Tables']['votos_lista']['Row']
 export type FotoActa = Database['public']['Tables']['fotos_acta']['Row']
 export type AuditoriaCambio = Database['public']['Tables']['auditoria_cambios']['Row']
 export type TestigoMesa = Database['public']['Tables']['testigo_mesas']['Row']
@@ -31,6 +32,7 @@ export interface ActaConRelaciones extends ActaE14 {
   registradoPor?: Profile
   verificadoPor?: Profile
   votos?: (VotoCandidato & { candidato?: Candidato & { partido?: Partido } })[]
+  votosLista?: (VotoLista & { partido?: Partido })[]
   fotos?: FotoActa[]
 }
 

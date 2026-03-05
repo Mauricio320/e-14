@@ -55,7 +55,11 @@ export function DashboardTestigo({ profile }: DashboardTestigoProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {mesas?.map((mesa) => (
-                <MesaCard key={mesa.id} mesa={mesa} />
+                <MesaCard
+                  key={mesa.id}
+                  mesa={mesa}
+                  inSend={mesa?.actas_e14?.[0]?.estado === "enviado"}
+                />
               ))}
             </div>
           )}
@@ -65,25 +69,36 @@ export function DashboardTestigo({ profile }: DashboardTestigoProps) {
   );
 }
 
-function MesaCard({ mesa }: { mesa: MesaConRelaciones }) {
+function MesaCard({ mesa, inSend }: { mesa: MesaConRelaciones; inSend?: boolean }) {
   return (
     <Link
       href={`/mesa/${mesa.id}`}
-      className="block p-6 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all"
+      className={`block p-6 border rounded-lg hover:shadow-sm transition-all ${
+        inSend
+          ? 'bg-green-50 border-green-200 hover:border-green-500'
+          : 'bg-white border-gray-200 hover:border-blue-500'
+      }`}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-3xl font-bold text-gray-900">
+          <p className={`text-3xl font-bold ${inSend ? 'text-green-900' : 'text-gray-900'}`}>
             Mesa {mesa.numero_mesa}
           </p>
           <p className="text-sm text-gray-600 mt-1">{mesa.puesto?.nombre}</p>
           <p className="text-sm text-gray-500">
             {mesa.puesto?.municipio?.nombre}
           </p>
+          {inSend && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+              Enviada
+            </span>
+          )}
         </div>
-        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          inSend ? 'bg-green-100' : 'bg-blue-100'
+        }`}>
           <svg
-            className="w-5 h-5 text-blue-600"
+            className={`w-5 h-5 ${inSend ? 'text-green-600' : 'text-blue-600'}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

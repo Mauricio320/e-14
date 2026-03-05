@@ -1,16 +1,23 @@
+import { useEffect, useRef } from "react";
 import type {
   Control,
   UseFormRegister,
   FieldArrayWithId,
   FieldErrors,
+  UseFormWatch,
 } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import type { CandidatoConPartido, Partido } from "@/types";
 import type { ActaE14Input } from "@/lib/validations/schemas";
+import { PartidoCandidatos } from "./PartidoCandidatos";
+import { SiNoToggle } from "@/components/ui/SiNoToggle";
 
 interface BloqueConteoProps {
   control: Control<ActaE14Input>;
   register: UseFormRegister<ActaE14Input>;
+  watch: UseFormWatch<ActaE14Input>;
   fields: FieldArrayWithId<ActaE14Input, "votos", "id">[];
+  listaFields: FieldArrayWithId<ActaE14Input, "votosPorLista", "id">[];
   candidatos: CandidatoConPartido[];
   errors: FieldErrors<ActaE14Input>;
   disabled?: boolean;
@@ -18,15 +25,24 @@ interface BloqueConteoProps {
     totalVotosValidos: number;
     totalSufragantes: number;
   };
+  onAlertaChange?: (
+    codigo: string,
+    activa: boolean,
+    descripcion?: string,
+  ) => void;
 }
 
 export function BloqueConteo({
+  control,
   register,
+  watch,
   fields,
+  listaFields,
   candidatos,
   errors,
   disabled = false,
   totales,
+  onAlertaChange,
 }: BloqueConteoProps) {
   // Agrupar candidatos por partido
   const candidatosPorPartido = candidatos.reduce(
@@ -46,6 +62,71 @@ export function BloqueConteo({
       { partido: Partido | undefined; candidatos: CandidatoConPartido[] }
     >,
   );
+
+  // Valores observados para alertas E-11 e UI
+  const totalVolantesE11 = watch("totalVolantesE11") ?? 0;
+  const totalVotosUrna = watch("totalVotosUrna") ?? 0;
+  const totalVotosIncinerados = watch("totalVotosIncinerados") ?? 0;
+  const votosNulos = watch("votosNulos") ?? 0;
+  const tarjetasNoMarcadas = watch("tarjetasNoMarcadas") ?? 0;
+  const votosEnBlanco = watch("votosEnBlanco") ?? 0;
+
+  const totalVotosPorLista =
+    watch("votosPorLista")?.reduce((sum, v) => sum + (v.votos || 0), 0) || 0;
+
+  const totalVotosPorCandidato =
+    watch("votos")?.reduce((sum, voto) => sum + (voto.votos || 0), 0) || 0;
+
+  const totalVotosMesa =
+    totalVotosPorLista + votosNulos + tarjetasNoMarcadas + votosEnBlanco;
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!onAlertaChange) return;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      // Alerta 1: E11 < (Urna - Incinerados)
+      const totalVotos = totalVotosUrna - totalVotosIncinerados;
+      const condicion1 =
+        totalVolantesE11 < totalVotosUrna - totalVotosIncinerados;
+      if (condicion1 && totalVotosUrna > 0) {
+        onAlertaChange(
+          "E11_MENOR_QUE_URNA_MENOS_INCINERADOS",
+          true,
+          `Nivelación de Mesa: El total de volantes E-11 (${totalVolantesE11}) es menor que los votos en la urna menos los incinerados (${totalVotosUrna} - ${totalVotosIncinerados} = ${
+            totalVotos
+          }).`,
+        );
+      } else {
+        onAlertaChange("E11_MENOR_QUE_URNA_MENOS_INCINERADOS", false);
+      }
+
+      // Alerta 2: E11 !== Total Votos Mesa
+      const condicion2 = totalVolantesE11 !== totalVotos;
+      if (condicion2 && (totalVolantesE11 > 0 || totalVotos > 0)) {
+        onAlertaChange(
+          "E11_DIFERENTE_TOTAL_MESA",
+          true,
+          `Totalizaciones: El total de volantes E-11 (${totalVolantesE11}) no coincide con el total de votos en la mesa (${totalVotos}).`,
+        );
+      } else {
+        onAlertaChange("E11_DIFERENTE_TOTAL_MESA", false);
+      }
+    }, 800);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [
+    totalVolantesE11,
+    totalVotosUrna,
+    totalVotosIncinerados,
+    totalVotosMesa,
+    onAlertaChange,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -113,82 +194,25 @@ export function BloqueConteo({
           </h3>
         </div>
         <div className="divide-y divide-gray-200">
-          {Object.entries(candidatosPorPartido).map(
-            ([partidoId, { partido, candidatos: cands }]) => (
-              <div key={partidoId} className="p-4">
-                {/* Cabecera del partido */}
-                <div
-                  className="flex items-center gap-3 mb-4 p-3 rounded-lg"
-                  style={{ backgroundColor: `${partido?.color_hex}15` }}
-                >
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: partido?.color_hex }}
-                  />
-                  <h4 className="font-semibold text-gray-900">
-                    {partido?.nombre}
-                  </h4>
-                  <span className="text-sm text-gray-500">
-                    ({partido?.codigo})
-                  </span>
-                </div>
-
-                {/* Candidatos - Grid mobile-first */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {cands.map((candidato) => {
-                    const fieldIndex = fields.findIndex(
-                      (f) => f.candidatoId === candidato.id,
-                    );
-
-                    return (
-                      <div
-                        key={candidato.id}
-                        className="p-4 border border-gray-200 rounded-lg bg-white"
-                      >
-                        <label className="block text-base text-gray-700 mb-3">
-                          {candidato.es_partido ? (
-                            <span className="font-medium text-gray-900">
-                              Voto al Partido
-                            </span>
-                          ) : (
-                            <>
-                              <span className="font-medium text-gray-900">
-                                {candidato.nombre}
-                              </span>
-                              {candidato.numero_lista && (
-                                <span className="text-gray-500 ml-1 text-sm">
-                                  (Partido {candidato.numero_lista})
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </label>
-                        <input
-                          {...register(`votos.${fieldIndex}.votos` as const, {
-                            valueAsNumber: true,
-                          })}
-                          type="number"
-                          min="0"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          disabled={disabled}
-                          className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                          placeholder="0"
-                        />
-                        <input
-                          {...register(
-                            `votos.${fieldIndex}.candidatoId` as const,
-                          )}
-                          type="hidden"
-                          value={candidato.id}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ),
-          )}
+          {Object.entries(candidatosPorPartido)
+            .sort(([, a], [, b]) => {
+              const nameA = a.partido?.nombre || "";
+              const nameB = b.partido?.nombre || "";
+              return nameA.localeCompare(nameB);
+            })
+            .map(([partidoId, { partido, candidatos: cands }]) => (
+              <PartidoCandidatos
+                key={partidoId}
+                partido={partido}
+                candidatos={cands}
+                fields={fields}
+                listaFields={listaFields}
+                register={register}
+                watch={watch}
+                disabled={disabled}
+                onAlertaChange={onAlertaChange}
+              />
+            ))}
         </div>
       </div>
 
@@ -249,39 +273,136 @@ export function BloqueConteo({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Votos por partidos
             </label>
+            <div className="min-h-[48px] px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center">
+              <span className="text-2xl font-bold text-blue-700">
+                {totalVotosPorCandidato}
+              </span>
+            </div>
             <input
+              type="hidden"
               {...register("totalVotosValidos", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
+
+          {/* Total Votos Lista - Calculado automáticamente */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Total de votos en la mesa
+              Total Votos Lista
             </label>
+            <div className="min-h-[48px] px-4 py-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center">
+              <span className="text-2xl font-bold text-green-700">
+                {totalVotosPorLista}
+              </span>
+            </div>
             <input
+              type="hidden"
+              {...register("totalVotosLista", { valueAsNumber: true })}
+            />
+          </div>
+
+          {/* Total de votos en la mesa - Calculado automáticamente */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Total de votos
+            </label>
+            <div className="min-h-[48px] px-4 py-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center justify-center">
+              <span className="text-2xl font-bold text-purple-700">
+                {totalVotosMesa}
+              </span>
+            </div>
+            <input
+              type="hidden"
               {...register("totalVotosMesa", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
         </div>
       </div>
 
-      {/* Observaciones */}
+      {/* Observaciones de la Mesa */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-          <h3 className="font-medium text-gray-900">Observaciones</h3>
+          <h3 className="font-medium text-gray-900">
+            Observaciones de la Mesa
+          </h3>
+        </div>
+
+        <div className="p-4 space-y-6">
+          {/* Tachaduras o enmendaduras */}
+          <Controller
+            name="tieneTachaduras"
+            control={control}
+            render={({ field }) => (
+              <SiNoToggle
+                label="¿Hubo tachaduras o enmendaduras?"
+                value={field.value || false}
+                onChange={field.onChange}
+                disabled={disabled}
+              />
+            )}
+          />
+
+          {/* Reconteo */}
+          <Controller
+            name="huboReconteo"
+            control={control}
+            render={({ field }) => (
+              <SiNoToggle
+                label="¿Hubo reconteo?"
+                value={field.value || false}
+                onChange={field.onChange}
+                disabled={disabled}
+              />
+            )}
+          />
+
+          {/* Reclamación */}
+          <Controller
+            name="huboReclamacion"
+            control={control}
+            render={({ field }) => (
+              <SiNoToggle
+                label="¿Se presentó reclamación en la mesa?"
+                value={field.value || false}
+                onChange={field.onChange}
+                disabled={disabled}
+              />
+            )}
+          />
+
+          {/* Tipo de reclamación - Solo visible si hubo reclamación */}
+          {watch("huboReclamacion") && (
+            <div className="animate-in slide-in-from-top-2 duration-200">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de reclamación
+              </label>
+              <select
+                {...register("tipoReclamacion")}
+                disabled={disabled}
+                className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 bg-white"
+              >
+                <option value="">Seleccione el tipo de reclamación...</option>
+                <option value="error_aritmetico">
+                  Error aritmético en el conteo
+                </option>
+                <option value="firmas_insuficientes">
+                  Actas firmadas por menos de dos jurados
+                </option>
+                <option value="sufragantes_excede_habilitados">
+                  Número de sufragantes excede a ciudadanos habilitados para el
+                  voto en mesa
+                </option>
+              </select>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Observaciones adicionales */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+          <h3 className="font-medium text-gray-900">
+            Observaciones Adicionales
+          </h3>
         </div>
 
         <div className="p-4">
