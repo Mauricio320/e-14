@@ -1,0 +1,29 @@
+# Configuración de Supabase para E-14 Digital
+
+[storage]
+enabled = true
+
+# Bucket para almacenar fotos de actas
+[[storage.buckets]]
+name = "actas-e14"
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
+
+# Políticas de acceso al bucket
+[storage.buckets.actas-e14.policies]
+
+# Política para usuarios autenticados puedan subir fotos
+[storage.buckets.actas-e14.policies.insert]
+name = "Usuarios autenticados pueden subir fotos"
+definition = "auth.role() = 'authenticated'"
+
+# Política para usuarios autenticados puedan ver fotos
+[storage.buckets.actas-e14.policies.select]
+name = "Usuarios autenticados pueden ver fotos"
+definition = "auth.role() = 'authenticated'"
+
+# Política para usuarios autenticados puedan eliminar sus propias fotos
+[storage.buckets.actas-e14.policies.delete]
+name = "Usuarios autenticados pueden eliminar fotos"
+definition = "auth.role() = 'authenticated'"
