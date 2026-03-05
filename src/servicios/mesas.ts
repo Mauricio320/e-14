@@ -80,7 +80,8 @@ export async function obtenerMesasPorTestigo(
           *,
           municipio:municipio_id (*)
         ),
-       actas_e14(estado)
+        actas_e14(estado),
+        afluencia_votantes(cantidad, hora_corte)
       )
     `,
     )

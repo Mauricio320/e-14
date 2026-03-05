@@ -1,52 +1,52 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useActasPorEstado } from '@/hooks/useActasE14'
-import { useVerificarActa, useCorregirActa } from '@/hooks/useActasE14'
-import { useMunicipios } from '@/hooks/useMunicipios'
-import { usePuestos } from '@/hooks/usePuestosVotacion'
-import type { ActaConRelaciones } from '@/types'
-import Link from 'next/link'
+import { useState } from "react";
+import { useActasPorEstado } from "@/hooks/useActasE14";
+import { useVerificarActa, useCorregirActa } from "@/hooks/useActasE14";
+import { useMunicipios } from "@/hooks/useMunicipios";
+import { usePuestos } from "@/hooks/usePuestosVotacion";
+import type { ActaConRelaciones } from "@/types";
+import Link from "next/link";
 
 export default function RevisorPage() {
-  const { data: actasPendientes, isLoading } = useActasPorEstado('enviado')
-  const { data: municipios } = useMunicipios()
-  const { data: puestos } = usePuestos()
+  const { data: actasPendientes, isLoading } = useActasPorEstado("enviado");
+  const { data: municipios } = useMunicipios();
+  const { data: puestos } = usePuestos();
 
-  const [filtroMunicipio, setFiltroMunicipio] = useState('')
-  const [filtroPuesto, setFiltroPuesto] = useState('')
+  const [filtroMunicipio, setFiltroMunicipio] = useState("");
+  const [filtroPuesto, setFiltroPuesto] = useState("");
 
-  const verificarActa = useVerificarActa()
-  const corregirActa = useCorregirActa()
+  const verificarActa = useVerificarActa();
+  const corregirActa = useCorregirActa();
 
   // Filtrar actas
   const actasFiltradas = actasPendientes?.filter((acta) => {
-    const cumpleMunicipio = !filtroMunicipio ||
-      acta.mesa?.puesto?.municipio_id === filtroMunicipio
-    const cumplePuesto = !filtroPuesto ||
-      acta.mesa?.puesto_id === filtroPuesto
-    return cumpleMunicipio && cumplePuesto
-  })
+    const cumpleMunicipio =
+      !filtroMunicipio || acta.mesa?.puesto?.municipio_id === filtroMunicipio;
+    const cumplePuesto = !filtroPuesto || acta.mesa?.puesto_id === filtroPuesto;
+    return cumpleMunicipio && cumplePuesto;
+  });
 
   async function handleVerificar(actaId: string) {
-    if (!confirm('¿Está seguro de verificar este acta?')) return
-    await verificarActa.mutateAsync(actaId)
+    if (!confirm("¿Está seguro de verificar este acta?")) return;
+    await verificarActa.mutateAsync(actaId);
   }
 
   async function handleCorregir(actaId: string) {
-    if (!confirm('¿Está seguro de solicitar corrección para este acta? Se creará una nueva versión.')) return
-    await corregirActa.mutateAsync(actaId)
+    if (
+      !confirm(
+        "¿Está seguro de solicitar corrección para este acta? Se creará una nueva versión.",
+      )
+    )
+      return;
+    await corregirActa.mutateAsync(actaId);
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Revisión de Actas
-        </h1>
-        <p className="text-gray-600">
-          Verificación y corrección de actas E-14
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">Revisión de Actas</h1>
+        <p className="text-gray-600">Verificación y corrección de actas E-14</p>
       </div>
 
       {/* Filtros */}
@@ -63,7 +63,9 @@ export default function RevisorPage() {
             >
               <option value="">Todos los municipios</option>
               {municipios?.map((m) => (
-                <option key={m.id} value={m.id}>{m.nombre}</option>
+                <option key={m.id} value={m.id}>
+                  {m.nombre}
+                </option>
               ))}
             </select>
           </div>
@@ -79,9 +81,13 @@ export default function RevisorPage() {
             >
               <option value="">Todos los puestos</option>
               {puestos
-                ?.filter((p) => !filtroMunicipio || p.municipio_id === filtroMunicipio)
+                ?.filter(
+                  (p) => !filtroMunicipio || p.municipio_id === filtroMunicipio,
+                )
                 ?.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}
+                  </option>
                 ))}
             </select>
           </div>
@@ -106,7 +112,9 @@ export default function RevisorPage() {
             </div>
           ) : actasFiltradas?.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-2">No hay actas pendientes de verificación</p>
+              <p className="text-gray-500 mb-2">
+                No hay actas pendientes de verificación
+              </p>
               <p className="text-sm text-gray-400">
                 Todas las actas han sido verificadas
               </p>
@@ -128,18 +136,24 @@ export default function RevisorPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 interface ActaCardProps {
-  acta: ActaConRelaciones
-  onVerificar: () => void
-  onCorregir: () => void
-  isVerifying: boolean
-  isCorrecting: boolean
+  acta: ActaConRelaciones;
+  onVerificar: () => void;
+  onCorregir: () => void;
+  isVerifying: boolean;
+  isCorrecting: boolean;
 }
 
-function ActaCard({ acta, onVerificar, onCorregir, isVerifying, isCorrecting }: ActaCardProps) {
+function ActaCard({
+  acta,
+  onVerificar,
+  onCorregir,
+  isVerifying,
+  isCorrecting,
+}: ActaCardProps) {
   return (
     <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -148,9 +162,9 @@ function ActaCard({ acta, onVerificar, onCorregir, isVerifying, isCorrecting }: 
             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
               Enviado
             </span>
-            <span className="text-sm text-gray-500">
+            {/* <span className="text-sm text-gray-500">
               Versión {acta.version}
-            </span>
+            </span> */}
           </div>
           <p className="font-medium text-gray-900 mt-2">
             Mesa {acta.mesa?.numero_mesa} - {acta.mesa?.puesto?.nombre}
@@ -159,7 +173,8 @@ function ActaCard({ acta, onVerificar, onCorregir, isVerifying, isCorrecting }: 
             {acta.mesa?.puesto?.municipio?.nombre}
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            Enviado: {new Date(acta.enviado_en || '').toLocaleString()} • Por: {acta.registradoPor?.full_name}
+            Enviado: {new Date(acta.enviado_en || "").toLocaleString()} • Por:{" "}
+            {acta.registradoPor?.full_name}
           </p>
           <p className="text-sm text-gray-600 mt-2">
             Total votos: {acta.total_votos_validos?.toLocaleString()}
@@ -178,17 +193,17 @@ function ActaCard({ acta, onVerificar, onCorregir, isVerifying, isCorrecting }: 
             disabled={isVerifying || isCorrecting}
             className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
           >
-            {isVerifying ? 'Verificando...' : 'Verificar'}
+            {isVerifying ? "Verificando..." : "Verificar"}
           </button>
           <button
             onClick={onCorregir}
             disabled={isVerifying || isCorrecting}
             className="px-4 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 transition-colors"
           >
-            {isCorrecting ? 'Creando...' : 'Corregir'}
+            {isCorrecting ? "Creando..." : "Corregir"}
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

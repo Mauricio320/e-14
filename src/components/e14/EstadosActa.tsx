@@ -1,40 +1,47 @@
-import type { EstadoActa } from '@/types'
+import type { EstadoActa } from "@/types";
 
 interface EstadosActaProps {
-  estado: EstadoActa
-  version: number
-  modoRevisor?: boolean
+  estado: EstadoActa;
+  version: number;
+  modoRevisor?: boolean;
 }
 
-export function EstadosActa({ estado, version, modoRevisor = false }: EstadosActaProps) {
-  const configEstados: Record<EstadoActa, { label: string; color: string; bg: string; icon: string }> = {
+export function EstadosActa({
+  estado,
+  version,
+  modoRevisor = false,
+}: EstadosActaProps) {
+  const configEstados: Record<
+    EstadoActa,
+    { label: string; color: string; bg: string; icon: string }
+  > = {
     borrador: {
-      label: 'Pendiente',
-      color: 'text-gray-700',
-      bg: 'bg-gray-100 border-gray-300',
-      icon: '📝',
+      label: "Pendiente",
+      color: "text-gray-700",
+      bg: "bg-gray-100 border-gray-300",
+      icon: "📝",
     },
     enviado: {
-      label: 'Enviado',
-      color: 'text-yellow-700',
-      bg: 'bg-yellow-50 border-yellow-300',
-      icon: '📤',
+      label: "Enviado",
+      color: "text-yellow-700",
+      bg: "bg-yellow-50 border-yellow-300",
+      icon: "📤",
     },
     verificado: {
-      label: 'Verificado',
-      color: 'text-green-700',
-      bg: 'bg-green-50 border-green-300',
-      icon: '✅',
+      label: "Verificado",
+      color: "text-green-700",
+      bg: "bg-green-50 border-green-300",
+      icon: "✅",
     },
     corregido: {
-      label: 'Corregido',
-      color: 'text-blue-700',
-      bg: 'bg-blue-50 border-blue-300',
-      icon: '🔧',
+      label: "Corregido",
+      color: "text-blue-700",
+      bg: "bg-blue-50 border-blue-300",
+      icon: "🔧",
     },
-  }
+  };
 
-  const config = configEstados[estado]
+  const config = configEstados[estado];
 
   return (
     <div className={`p-4 rounded-lg border ${config.bg}`}>
@@ -52,46 +59,46 @@ export function EstadosActa({ estado, version, modoRevisor = false }: EstadosAct
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-right">
+          {/* <div className="text-right">
             <p className="text-sm text-gray-500">Versión</p>
             <p className="text-lg font-semibold text-gray-700">
               {version}
             </p>
-          </div>
+          </div> */}
 
-          {modoRevisor && estado === 'enviado' && (
+          {modoRevisor && estado === "enviado" && (
             <div className="px-4 py-2 bg-white rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-600">
-                Pendiente de revisión
-              </p>
+              <p className="text-sm text-gray-600">Pendiente de revisión</p>
             </div>
           )}
         </div>
       </div>
 
-      {estado === 'borrador' && (
+      {estado === "borrador" && (
         <p className="mt-3 text-sm text-gray-600">
-          Complete el formulario y envíe el acta. Una vez enviada no podrá editarla.
+          Complete el formulario y envíe el acta. Una vez enviada no podrá
+          editarla.
         </p>
       )}
 
-      {estado === 'enviado' && (
+      {estado === "enviado" && (
         <p className="mt-3 text-sm text-yellow-700">
-          El acta ha sido enviada y está pendiente de verificación por un revisor.
+          El acta ha sido enviada y está pendiente de verificación por un
+          revisor.
         </p>
       )}
 
-      {estado === 'verificado' && (
+      {estado === "verificado" && (
         <p className="mt-3 text-sm text-green-700">
           El acta ha sido verificada y aprobada.
         </p>
       )}
 
-      {estado === 'corregido' && (
+      {estado === "corregido" && (
         <p className="mt-3 text-sm text-blue-700">
           Se ha creado una nueva versión del acta con correcciones.
         </p>
       )}
     </div>
-  )
+  );
 }
