@@ -194,8 +194,10 @@ export function BloqueEvidencia({
     setFotosInfo(finalInfo)
     setGlobalCompressing(false)
 
-    setFotos(prev => [...prev, ...comprimidos])
-  }, [fotos.length, fotosExistentes.length, setFotos, fotosInfo])
+    // Usar el estado anterior a través de una referencia temporal
+    const nuevasFotos = [...fotos, ...comprimidos]
+    setFotos(nuevasFotos)
+  }, [fotos, fotosExistentes.length, setFotos, fotosInfo])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -214,11 +216,9 @@ export function BloqueEvidencia({
   }, [])
 
   const eliminarFoto = useCallback((index: number) => {
-    setFotos(prev => {
-      const nuevasFotos = [...prev]
-      nuevasFotos.splice(index, 1)
-      return nuevasFotos
-    })
+    const nuevasFotos = [...fotos]
+    nuevasFotos.splice(index, 1)
+    setFotos(nuevasFotos)
 
     // Actualizar map de info
     setFotosInfo(prev => {

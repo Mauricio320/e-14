@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         full_name: fullName,
         role: role,
         activo: true,
-      })
+      } as never)
 
     // Paso 3: Rollback si falla la creación del perfil
     if (profileError) {
