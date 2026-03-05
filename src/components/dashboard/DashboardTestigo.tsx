@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useMesasPorTestigo } from '@/hooks/useMesas'
-import type { Profile, MesaConRelaciones } from '@/types'
-import Link from 'next/link'
+import { useMesasPorTestigo } from "@/hooks/useMesas";
+import type { Profile, MesaConRelaciones } from "@/types";
+import Link from "next/link";
 
 interface DashboardTestigoProps {
-  profile: Profile
+  profile: Profile;
 }
 
 export function DashboardTestigo({ profile }: DashboardTestigoProps) {
-  const { data: mesas, isLoading } = useMesasPorTestigo(profile.id)
+  const { data: mesas, isLoading } = useMesasPorTestigo(profile.id);
 
   return (
     <div className="space-y-6">
@@ -17,16 +17,12 @@ export function DashboardTestigo({ profile }: DashboardTestigoProps) {
         <h1 className="text-2xl font-bold text-gray-900">
           Mis Mesas Asignadas
         </h1>
-        <p className="text-gray-600">
-          Bienvenido, {profile.full_name}
-        </p>
+        <p className="text-gray-600">Bienvenido, {profile.full_name}</p>
       </div>
 
       {/* Instrucciones */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-medium text-blue-800 mb-2">
-          Instrucciones
-        </h3>
+        <h3 className="font-medium text-blue-800 mb-2">Instrucciones</h3>
         <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
           <li>Seleccione una mesa para registrar el acta E-14</li>
           <li>Ingrese los votos por candidato cuidadosamente</li>
@@ -66,7 +62,7 @@ export function DashboardTestigo({ profile }: DashboardTestigoProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function MesaCard({ mesa }: { mesa: MesaConRelaciones }) {
@@ -80,9 +76,7 @@ function MesaCard({ mesa }: { mesa: MesaConRelaciones }) {
           <p className="text-3xl font-bold text-gray-900">
             Mesa {mesa.numero_mesa}
           </p>
-          <p className="text-sm text-gray-600 mt-1">
-            {mesa.puesto?.nombre}
-          </p>
+          <p className="text-sm text-gray-600 mt-1">{mesa.puesto?.nombre}</p>
           <p className="text-sm text-gray-500">
             {mesa.puesto?.municipio?.nombre}
           </p>
@@ -103,11 +97,6 @@ function MesaCard({ mesa }: { mesa: MesaConRelaciones }) {
           </svg>
         </div>
       </div>
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <p className="text-sm text-gray-500">
-          Potencial electoral: {mesa.potencial_electoral} votantes
-        </p>
-      </div>
     </Link>
-  )
+  );
 }
