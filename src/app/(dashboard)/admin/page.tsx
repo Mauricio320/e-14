@@ -29,7 +29,12 @@ import {
   usePuestosPorMunicipio,
 } from "@/hooks/usePuestosVotacion";
 import { useCrearMesa, useEliminarMesa } from "@/hooks/useMesas";
-import { useTestigos, useRevisores } from "@/hooks/useProfiles";
+import {
+  useTestigos,
+  useRevisores,
+  useCoordinadoresPuesto,
+  useAsignarPuesto,
+} from "@/hooks/useProfiles";
 import {
   useAsignacionesRevisorPorMunicipio,
   useAsignarRevisorAPuesto,
@@ -39,7 +44,12 @@ import type { Profile, Role } from "@/types";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<
-    "usuarios" | "puestos" | "mesas" | "asignaciones" | "asignaciones_revisores"
+    | "usuarios"
+    | "puestos"
+    | "mesas"
+    | "asignaciones"
+    | "asignaciones_revisores"
+    | "asignaciones_coordinadores"
   >("usuarios");
 
   return (
@@ -104,6 +114,16 @@ export default function AdminPage() {
           >
             Revisores (Puestos)
           </button>
+          <button
+            onClick={() => setActiveTab("asignaciones_coordinadores")}
+            className={`pb-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "asignaciones_coordinadores"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Coord. Puesto (Puestos)
+          </button>
         </nav>
       </div>
 
@@ -113,6 +133,9 @@ export default function AdminPage() {
       {activeTab === "mesas" && <MesasTab />}
       {activeTab === "asignaciones" && <AsignacionesTab />}
       {activeTab === "asignaciones_revisores" && <AsignacionesRevisoresTab />}
+      {activeTab === "asignaciones_coordinadores" && (
+        <AsignacionesCoordinadoresTab />
+      )}
     </div>
   );
 }
@@ -1166,6 +1189,220 @@ function AsignacionesRevisoresTab() {
                                 handleDesasignar(puesto.id, revisorAsignado.id)
                               }
                               disabled={desasignar.isPending}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => iniciarEdicion(puesto.id)}
+                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                          >
+                            Asignar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AsignacionesCoordinadoresTab() {
+  const [municipioId, setMunicipioId] = useState<string>("");
+  const [puestoEnEdicion, setPuestoEnEdicion] = useState<string | null>(null);
+  const [coordinadorSeleccionado, setCoordinadorSeleccionado] =
+    useState<string>("");
+
+  const { data: municipios } = useMunicipios();
+  const { data: coordinadores } = useCoordinadoresPuesto();
+  const { data: puestos, isLoading: puestosLoading } =
+    usePuestosPorMunicipio(municipioId);
+  const asignar = useAsignarPuesto();
+
+  // Obtener el coordinador asignado a un puesto (buscando en profiles donde puesto_id coincida)
+  const getCoordinadorAsignado = (puestoId: string) => {
+    return coordinadores?.find((c) => c.puesto_id === puestoId) || null;
+  };
+
+  const handleAsignar = async (puestoId: string) => {
+    if (!coordinadorSeleccionado) return;
+    await asignar.mutateAsync({
+      id: coordinadorSeleccionado,
+      puestoId,
+    });
+    setPuestoEnEdicion(null);
+    setCoordinadorSeleccionado("");
+  };
+
+  const handleDesasignar = async (coordinadorId: string) => {
+    await asignar.mutateAsync({
+      id: coordinadorId,
+      puestoId: null,
+    });
+  };
+
+  const iniciarEdicion = (puestoId: string, coordinadorActualId?: string) => {
+    setPuestoEnEdicion(puestoId);
+    setCoordinadorSeleccionado(coordinadorActualId || "");
+  };
+
+  const cancelarEdicion = () => {
+    setPuestoEnEdicion(null);
+    setCoordinadorSeleccionado("");
+  };
+
+  const isLoading = puestosLoading;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Asignación de Coordinadores de Puesto a Puestos
+        </h2>
+      </div>
+
+      {/* Selector de Municipio */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Seleccione un municipio
+        </label>
+        <select
+          value={municipioId}
+          onChange={(e) => {
+            setMunicipioId(e.target.value);
+            setPuestoEnEdicion(null);
+            setCoordinadorSeleccionado("");
+          }}
+          className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">Seleccione un municipio...</option>
+          {municipios?.map((municipio) => (
+            <option key={municipio.id} value={municipio.id}>
+              {municipio.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tabla de Puestos */}
+      {!municipioId ? (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+          <p className="text-gray-500">
+            Seleccione un municipio para ver sus puestos
+          </p>
+        </div>
+      ) : isLoading ? (
+        <div className="text-center py-8 text-gray-500">
+          Cargando puestos...
+        </div>
+      ) : puestos?.length === 0 ? (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+          <p className="text-gray-500">
+            Este municipio no tiene puestos registrados
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                    Puesto de Votación
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                    Coordinador Asignado
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {puestos?.map((puesto) => {
+                  const coordinadorAsignado = getCoordinadorAsignado(puesto.id);
+                  const estaEnEdicion = puestoEnEdicion === puesto.id;
+
+                  return (
+                    <tr key={puesto.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                        {puesto.nombre}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {coordinadorAsignado ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {coordinadorAsignado.full_name}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            Sin asignar
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {estaEnEdicion ? (
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={coordinadorSeleccionado}
+                              onChange={(e) =>
+                                setCoordinadorSeleccionado(e.target.value)
+                              }
+                              className="text-sm border border-gray-300 rounded px-2 py-1"
+                            >
+                              <option value="">
+                                Seleccione coordinador...
+                              </option>
+                              {coordinadores?.map((coordinador) => (
+                                <option
+                                  key={coordinador.id}
+                                  value={coordinador.id}
+                                >
+                                  {coordinador.full_name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() => handleAsignar(puesto.id)}
+                              disabled={
+                                !coordinadorSeleccionado || asignar.isPending
+                              }
+                              className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {asignar.isPending ? "..." : "Guardar"}
+                            </button>
+                            <button
+                              onClick={cancelarEdicion}
+                              className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : coordinadorAsignado ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                iniciarEdicion(
+                                  puesto.id,
+                                  coordinadorAsignado.id
+                                )
+                              }
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              Cambiar
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDesasignar(coordinadorAsignado.id)
+                              }
+                              disabled={asignar.isPending}
                               className="text-red-600 hover:text-red-800 text-sm"
                             >
                               Remover

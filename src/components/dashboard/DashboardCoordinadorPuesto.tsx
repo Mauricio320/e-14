@@ -1,24 +1,59 @@
-'use client'
+"use client";
 
-import { useEstadisticasPuesto, usePuesto } from '@/hooks/usePuestosVotacion'
-import { useMesasPorPuesto } from '@/hooks/useMesas'
-import type { Profile, MesaConRelaciones } from '@/types'
-import Link from 'next/link'
+import { useEstadisticasPuesto, usePuesto } from "@/hooks/usePuestosVotacion";
+import { useMesasConActasPorPuesto, useMesasPorPuesto } from "@/hooks/useMesas";
+import type { Profile, MesaConRelaciones } from "@/types";
+import Link from "next/link";
+import { MesaCard } from "./MesaCard";
+import { useEffect, useState } from "react";
+import { ModalAfluencia } from "./ModalAfluencia";
+import { ModalOpcionesMesa } from "./ModalOpcionesMesa";
 
 interface DashboardCoordinadorPuestoProps {
-  profile: Profile
+  profile: Profile;
 }
 
-export function DashboardCoordinadorPuesto({ profile }: DashboardCoordinadorPuestoProps) {
-  const puestoId = profile.puesto_id
+export function DashboardCoordinadorPuesto({
+  profile,
+}: DashboardCoordinadorPuestoProps) {
+  const puestoId = profile.puesto_id;
 
-  const { data: puesto } = usePuesto(puestoId || '')
+  const { data: puesto } = usePuesto(puestoId || "");
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticasPuesto(
-    puestoId || ''
-  )
-  const { data: mesas, isLoading: loadingMesas } = useMesasPorPuesto(
-    puestoId || ''
-  )
+    puestoId || "",
+  );
+
+  const {
+    data: mesas,
+    isLoading: loadingMesas,
+    refetch,
+  } = useMesasConActasPorPuesto(puestoId || "");
+
+  const [mesaSeleccionada, setMesaSeleccionada] =
+    useState<MesaConRelaciones | null>(null);
+  const [modalType, setModalType] = useState<"opciones" | "afluencia" | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (puestoId) {
+      refetch();
+    }
+  }, [puestoId]);
+
+  const handleMesaClick = (mesa: MesaConRelaciones) => {
+    setMesaSeleccionada(mesa);
+    setModalType("opciones");
+  };
+
+  const closeModals = () => {
+    setModalType(null);
+    setTimeout(() => setMesaSeleccionada(null), 200); // Dar tiempo a la animación de cierre
+  };
+
+  const openAfluencia = () => {
+    setModalType("afluencia");
+  };
 
   if (!puestoId) {
     return (
@@ -27,15 +62,13 @@ export function DashboardCoordinadorPuesto({ profile }: DashboardCoordinadorPues
           No tiene un puesto de votación asignado. Contacte al administrador.
         </p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {puesto?.nombre}
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">{puesto?.nombre}</h1>
         <p className="text-gray-600">
           Coordinador de Puesto: {profile.full_name}
         </p>
@@ -89,9 +122,7 @@ export function DashboardCoordinadorPuesto({ profile }: DashboardCoordinadorPues
       {/* Mesas */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Mesas
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Mesas</h2>
           <span className="text-sm text-gray-500">
             {mesas?.length || 0} mesas en total
           </span>
@@ -102,65 +133,57 @@ export function DashboardCoordinadorPuesto({ profile }: DashboardCoordinadorPues
               Cargando mesas...
             </div>
           ) : mesas?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No hay mesas configuradas en este puesto
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">
+                No tiene mesas asignadas actualmente
+              </p>
+              <p className="text-sm text-gray-400">
+                Contacte a su coordinador para que le asigne mesas
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {mesas?.map((mesa) => (
-                <MesaCard key={mesa.id} mesa={mesa} />
+                <MesaCard
+                  key={mesa.id}
+                  mesa={mesa}
+                  inSend={
+                    mesa?.actas_e14?.[0]?.estado === "enviado" ||
+                    mesa?.actas_e14?.[0]?.estado === "verificado"
+                  }
+                  onClick={() => handleMesaClick(mesa)}
+                />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* --- Modals --- */}
+      {/* 1. Modal de Opciones (E-14 vs Afluencia) */}
+      <ModalOpcionesMesa
+        isOpen={modalType === "opciones" && mesaSeleccionada !== null}
+        onClose={closeModals}
+        mesa={mesaSeleccionada}
+        onOpenAfluencia={openAfluencia}
+      />
+
+      {/* 2. Modal de Afluencia */}
+      <ModalAfluencia
+        isOpen={modalType === "afluencia"}
+        onClose={closeModals}
+        mesa={mesaSeleccionada}
+        profileId={profile.id}
+      />
+      {/* Mesas */}
     </div>
-  )
-}
-
-function MesaCard({ mesa }: { mesa: MesaConRelaciones }) {
-  // Determinar el estado del acta basado en los datos
-  const tieneActa = false // Esto se calcularía con los datos reales
-  const estadoActa = mesa.puesto?.zona === 'urbana' ? 'borrador' : 'enviado'
-
-  const estadoColors: Record<string, string> = {
-    borrador: 'bg-gray-100 border-gray-300',
-    enviado: 'bg-yellow-50 border-yellow-300',
-    verificado: 'bg-green-50 border-green-300',
-    corregido: 'bg-blue-50 border-blue-300',
-  }
-
-  const estadoLabels: Record<string, string> = {
-    borrador: 'Sin reportar',
-    enviado: 'Enviada',
-    verificado: 'Verificada',
-    corregido: 'Corregida',
-  }
-
-  return (
-    <Link
-      href={`/mesa/${mesa.id}`}
-      className={`p-4 border rounded-lg transition-colors ${
-        estadoColors[estadoActa] || 'bg-gray-100 border-gray-300'
-      } hover:shadow-sm`}
-    >
-      <p className="text-2xl font-bold text-gray-900 text-center">
-        {mesa.numero_mesa}
-      </p>
-      <p className="text-xs text-center text-gray-600 mt-1">
-        {estadoLabels[estadoActa] || 'Sin reportar'}
-      </p>
-      <p className="text-xs text-center text-gray-400 mt-1">
-        Potencial: {mesa.potencial_electoral}
-      </p>
-    </Link>
-  )
+  );
 }
 
 interface StatCardProps {
-  title: string
-  value: string | number
-  loading: boolean
+  title: string;
+  value: string | number;
+  loading: boolean;
 }
 
 function StatCard({ title, value, loading }: StatCardProps) {
@@ -173,5 +196,5 @@ function StatCard({ title, value, loading }: StatCardProps) {
         <p className="text-3xl font-bold text-gray-900">{value}</p>
       )}
     </div>
-  )
+  );
 }
