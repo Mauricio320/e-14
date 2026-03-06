@@ -9,6 +9,29 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      alertas_acta: {
+        Row: {
+          id: string;
+          acta_id: string;
+          codigo: string;
+          descripcion: string;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          acta_id: string;
+          codigo: string;
+          descripcion: string;
+          creado_en?: string;
+        };
+        Update: {
+          id?: string;
+          acta_id?: string;
+          codigo?: string;
+          descripcion?: string;
+          creado_en?: string;
+        };
+      };
       actas_e14: {
         Row: {
           id: string;
