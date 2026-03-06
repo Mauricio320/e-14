@@ -21,6 +21,7 @@ interface BloqueConteoProps {
   candidatos: CandidatoConPartido[];
   errors: FieldErrors<ActaE14Input>;
   disabled?: boolean;
+  isRevisor?: boolean;
   totales: {
     totalVotosValidos: number;
     totalSufragantes: number;
@@ -43,6 +44,7 @@ export function BloqueConteo({
   disabled = false,
   totales,
   onAlertaChange,
+  isRevisor,
 }: BloqueConteoProps) {
   // Agrupar candidatos por partido
   const candidatosPorPartido = candidatos.reduce(
@@ -222,7 +224,7 @@ export function BloqueConteo({
           <h3 className="font-medium text-gray-900">Totales del Acta</h3>
         </div>
 
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Votos nulos
@@ -268,20 +270,27 @@ export function BloqueConteo({
               placeholder="0"
             />
           </div>
+        </div>
+      </div>
 
+      <div
+        className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+        hidden={!isRevisor}
+      >
+        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+          <h3 className="font-medium text-gray-900">Conteo del sistema</h3>
+        </div>
+
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Votos por partidos
             </label>
-            <div className="min-h-[48px] px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-blue-700">
+            <div className="w-full h-[48px] px-4 flex items-center text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
+              <span className="text-1xl text-gray-700">
                 {totalVotosPorCandidato}
               </span>
             </div>
-            <input
-              type="hidden"
-              {...register("totalVotosValidos", { valueAsNumber: true })}
-            />
           </div>
 
           {/* Total Votos Lista - Calculado automáticamente */}
@@ -289,15 +298,11 @@ export function BloqueConteo({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Total Votos Lista
             </label>
-            <div className="min-h-[48px] px-4 py-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-green-700">
+            <div className="w-full h-[48px] px-4 flex items-center text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
+              <span className="text-1xl text-gray-700">
                 {totalVotosPorLista}
               </span>
             </div>
-            <input
-              type="hidden"
-              {...register("totalVotosLista", { valueAsNumber: true })}
-            />
           </div>
 
           {/* Total de votos en la mesa - Calculado automáticamente */}
@@ -305,15 +310,9 @@ export function BloqueConteo({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Total de votos
             </label>
-            <div className="min-h-[48px] px-4 py-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-purple-700">
-                {totalVotosMesa}
-              </span>
+            <div className="w-full h-[48px] px-4 flex items-center text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
+              <span className="text-1xl text-gray-700">{totalVotosMesa}</span>
             </div>
-            <input
-              type="hidden"
-              {...register("totalVotosMesa", { valueAsNumber: true })}
-            />
           </div>
         </div>
       </div>

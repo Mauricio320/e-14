@@ -22,6 +22,7 @@ export type AuditoriaCambio =
 export type TestigoMesa = Database["public"]["Tables"]["testigo_mesas"]["Row"];
 export type RevisorAsignacion =
   Database["public"]["Tables"]["revisor_asignaciones"]["Row"];
+export type AlertaActa = Database["public"]["Tables"]["alertas_acta"]["Row"];
 
 // Tipos con relaciones
 export type CandidatoConPartido = Candidato & { partido?: Partido };
@@ -40,6 +41,7 @@ export interface ActaConRelaciones extends ActaE14 {
   votos?: (VotoCandidato & { candidato?: Candidato & { partido?: Partido } })[];
   votosLista?: (VotoLista & { partido?: Partido })[];
   fotos?: FotoActa[];
+  alertas?: AlertaActa[];
 }
 
 export interface PuestoConRelaciones extends PuestoVotacion {

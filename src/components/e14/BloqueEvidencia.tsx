@@ -131,6 +131,7 @@ interface BloqueEvidenciaProps {
   setFotos: (fotos: File[]) => void;
   disabled?: boolean;
   fotosExistentes?: FotoActa[];
+  isRevisor?: boolean;
 }
 
 export function BloqueEvidencia({
@@ -138,6 +139,7 @@ export function BloqueEvidencia({
   setFotos,
   disabled = false,
   fotosExistentes = [],
+  isRevisor,
 }: BloqueEvidenciaProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
@@ -282,7 +284,10 @@ export function BloqueEvidencia({
   );
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+      hidden={isRevisor}
+    >
       <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <h3 className="font-medium text-gray-900">Fotos E-14</h3>
         <span className="text-sm text-gray-500">

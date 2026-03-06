@@ -178,3 +178,33 @@ export async function obtenerAsignacionesPorPuesto(
   if (error) throw error;
   return (data as unknown as TestigoMesaConTestigo[]) || [];
 }
+
+export async function obtenerMesasConActasPorPuesto(
+  puestoId: string,
+): Promise<MesaConRelaciones[]> {
+  const { data, error } = await supabase
+    .from("mesas")
+    .select(
+      `
+      *,
+      puesto:puesto_id (
+        *,
+        municipio:municipio_id (*)
+      ),
+      actas_e14 (
+        *,
+        registradoPor:registrado_por (*),
+        verificadoPor:verificado_por (*)
+      ),
+      afluencia_votantes (
+        cantidad, 
+        hora_corte
+      )
+    `,
+    )
+    .eq("puesto_id", puestoId)
+    .order("numero_mesa");
+
+  if (error) throw error;
+  return (data as MesaConRelaciones[]) || [];
+}

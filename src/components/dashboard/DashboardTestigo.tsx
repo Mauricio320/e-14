@@ -83,7 +83,10 @@ export function DashboardTestigo({ profile }: DashboardTestigoProps) {
                 <MesaCard
                   key={mesa.id}
                   mesa={mesa}
-                  inSend={mesa?.actas_e14?.[0]?.estado === "enviado"}
+                  inSend={
+                    mesa?.actas_e14?.[0]?.estado === "enviado" ||
+                    mesa?.actas_e14?.[0]?.estado === "verificado"
+                  }
                   onClick={() => handleMesaClick(mesa)}
                 />
               ))}
@@ -208,8 +211,8 @@ function MesaCard({
             {mesa.puesto?.municipio?.nombre}
           </p>
           {inSend && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
-              Enviada
+            <span className="inline-flex capitalize items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+              {mesa?.actas_e14?.[0]?.estado}
             </span>
           )}
         </div>

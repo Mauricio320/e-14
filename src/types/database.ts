@@ -9,6 +9,29 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      alertas_acta: {
+        Row: {
+          id: string;
+          acta_id: string;
+          codigo: string;
+          descripcion: string;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          acta_id: string;
+          codigo: string;
+          descripcion: string;
+          creado_en?: string;
+        };
+        Update: {
+          id?: string;
+          acta_id?: string;
+          codigo?: string;
+          descripcion?: string;
+          creado_en?: string;
+        };
+      };
       actas_e14: {
         Row: {
           id: string;
@@ -27,6 +50,7 @@ export interface Database {
           total_votos_lista: number | null;
           total_sufragantes: number;
           observaciones: string | null;
+          observaciones_revisor: string | null;
           tiene_tachaduras: boolean | null;
           hubo_reconteo: boolean | null;
           hubo_reclamacion: boolean | null;
@@ -52,6 +76,7 @@ export interface Database {
           total_votos_mesa?: number;
           total_sufragantes?: number;
           observaciones?: string | null;
+          observaciones_revisor?: string | null;
           tiene_tachaduras?: boolean | null;
           hubo_reconteo?: boolean | null;
           hubo_reclamacion?: boolean | null;
@@ -79,6 +104,7 @@ export interface Database {
           total_votos_lista?: number | null;
           total_sufragantes?: number;
           observaciones?: string | null;
+          observaciones_revisor?: string | null;
           tiene_tachaduras?: boolean | null;
           hubo_reconteo?: boolean | null;
           hubo_reclamacion?: boolean | null;

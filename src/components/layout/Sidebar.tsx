@@ -1,57 +1,57 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import type { Profile, Role } from '@/types'
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { Profile, Role } from "@/types";
 
 interface SidebarProps {
-  profile: Profile | null
-  isOpen: boolean
-  onClose: () => void
+  profile: Profile | null;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 interface NavItem {
-  href: string
-  label: string
-  icon: React.ReactNode
-  roles: Role[]
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  roles: Role[];
 }
 
 export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   const navItems: NavItem[] = [
     {
-      href: '/',
-      label: 'Dashboard',
+      href: "/",
+      label: "Dashboard",
       icon: <DashboardIcon />,
-      roles: ['maestro', 'revisor', 'coordinador_municipal', 'coordinador_puesto', 'testigo'],
+      roles: [
+        "maestro",
+        "revisor",
+        "coordinador_municipal",
+        "coordinador_puesto",
+        "testigo",
+      ],
     },
     {
-      href: '/revisor',
-      label: 'Revisión',
-      icon: <ReviewIcon />,
-      roles: ['maestro', 'revisor'],
-    },
-    {
-      href: '/admin',
-      label: 'Administración',
+      href: "/admin",
+      label: "Administración",
       icon: <AdminIcon />,
-      roles: ['maestro'],
+      roles: ["maestro"],
     },
-  ]
+  ];
 
-  const visibleItems = navItems.filter(item =>
-    profile?.role && item.roles.includes(profile.role)
-  )
+  const visibleItems = navItems.filter(
+    (item) => profile?.role && item.roles.includes(profile.role),
+  );
 
   return (
     <aside
       className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:static lg:translate-x-0 lg:w-64
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        nav:static nav:translate-x-0 nav:w-64
       `}
     >
       <div className="p-6 border-b border-gray-200">
@@ -68,7 +68,8 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
 
       <nav className="flex-1 p-4 space-y-1">
         {visibleItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
@@ -77,16 +78,16 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
               onClick={onClose}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 isActive
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
-              <span className={isActive ? 'text-blue-600' : 'text-gray-400'}>
+              <span className={isActive ? "text-blue-600" : "text-gray-400"}>
                 {item.icon}
               </span>
               <span className="font-medium">{item.label}</span>
             </Link>
-          )
+          );
         })}
       </nav>
 
@@ -97,12 +98,17 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
         </div>
       </div>
     </aside>
-  )
+  );
 }
 
 function DashboardIcon() {
   return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -110,12 +116,17 @@ function DashboardIcon() {
         d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
       />
     </svg>
-  )
+  );
 }
 
 function ReviewIcon() {
   return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -123,12 +134,17 @@ function ReviewIcon() {
         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
       />
     </svg>
-  )
+  );
 }
 
 function AdminIcon() {
   return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -142,5 +158,5 @@ function AdminIcon() {
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
       />
     </svg>
-  )
+  );
 }

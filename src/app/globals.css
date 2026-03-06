@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --breakpoint-nav: 87.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,5 +32,12 @@ input {
 }
 textarea {
   outline: none;
+  color: var(--color-gray-700);
+}
+select {
+  color: var(--color-gray-700);
+}
+
+option {
   color: var(--color-gray-700);
 }
