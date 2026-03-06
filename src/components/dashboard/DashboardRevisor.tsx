@@ -134,6 +134,8 @@ export function DashboardRevisor({ profile }: DashboardRevisorProps) {
                   mesa={mesa}
                   inSend={mesa?.actas_e14?.[0]?.estado === "enviado"}
                   onClick={() => router.push(`/revicion-mesa/${mesa.id}`)}
+                  isRevisor={true}
+                  status={mesa?.actas_e14?.[0]?.estado}
                 />
               ))}
             </div>
@@ -148,10 +150,14 @@ function MesaCard({
   mesa,
   inSend,
   onClick,
+  isRevisor,
+  status,
 }: {
   mesa: MesaConRelaciones;
   inSend?: boolean;
   onClick: () => void;
+  isRevisor?: boolean;
+  status?: string;
 }) {
   const totalAfluencia =
     mesa.afluencia_votantes?.reduce((acc, a) => acc + (a.cantidad || 0), 0) ||
@@ -162,15 +168,21 @@ function MesaCard({
     <button
       onClick={onClick}
       className={`w-full cursor-pointer text-left p-6 border rounded-lg hover:shadow-sm transition-all flex flex-col justify-between h-full ${
-        inSend
-          ? "bg-green-50 border-green-200 hover:border-green-500"
-          : "bg-white border-gray-200 hover:border-blue-500"
+        isRevisor
+          ? status === "verificado"
+            ? "bg-orange-50 border-orange-200 hover:border-orange-500"
+            : status === "enviado"
+              ? "bg-green-50 border-green-200 hover:border-green-500"
+              : ""
+          : inSend
+            ? "bg-green-50 border-green-200 hover:border-green-500"
+            : "bg-white border-gray-200 hover:border-blue-500"
       }`}
     >
       <div className="flex items-start justify-between w-full">
         <div>
           <p
-            className={`text-3xl font-bold ${inSend ? "text-green-900" : "text-gray-900"}`}
+            className={`text-3xl font-bold ${inSend ? "text-gray-900" : "text-gray-900"}`}
           >
             Mesa {mesa.numero_mesa}
           </p>
@@ -178,8 +190,8 @@ function MesaCard({
           <p className="text-sm text-gray-500">
             {mesa.puesto?.municipio?.nombre}
           </p>
-          {inSend && (
-            <span className="inline-flex capitalize items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+          {(inSend || isRevisor) && (
+            <span className="inline-flex capitalize items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-2">
               {mesa?.actas_e14?.[0]?.estado}
             </span>
           )}

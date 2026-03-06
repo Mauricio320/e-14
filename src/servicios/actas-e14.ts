@@ -230,9 +230,96 @@ export async function enviarActa(id: string): Promise<ActaE14> {
   return data as ActaE14;
 }
 
-export async function verificarActa(id: string): Promise<ActaE14> {
+export interface VerificarActaInput {
+  total_volantes_e11?: number;
+  total_votos_urna?: number;
+  total_votos_incinerados?: number;
+  votos_en_blanco?: number;
+  votos_nulos?: number;
+  tarjetas_no_marcadas?: number;
+  total_votos_validos?: number;
+  total_votos_mesa?: number;
+  total_votos_lista?: number;
+  total_sufragantes?: number;
+  observaciones?: string;
+  observaciones_revisor?: string;
+  tiene_tachaduras?: boolean;
+  hubo_reconteo?: boolean;
+  hubo_reclamacion?: boolean;
+  tipo_reclamacion?: string;
+  votos?: { candidato_id: string; votos: number }[];
+  votosLista?: { partido_id: string; votos: number }[];
+}
+
+export async function verificarActa(
+  id: string,
+  datos?: VerificarActaInput,
+): Promise<ActaE14> {
   const { data: userData } = await supabase.auth.getUser();
 
+  // 1. Actualizar los datos del acta si se proporcionan
+  if (datos) {
+    const { error: errorUpdate } = await supabase
+      .from("actas_e14")
+      .update({
+        total_volantes_e11: datos.total_volantes_e11,
+        total_votos_urna: datos.total_votos_urna,
+        total_votos_incinerados: datos.total_votos_incinerados,
+        votos_en_blanco: datos.votos_en_blanco,
+        votos_nulos: datos.votos_nulos,
+        tarjetas_no_marcadas: datos.tarjetas_no_marcadas,
+        total_votos_validos: datos.total_votos_validos,
+        total_votos_mesa: datos.total_votos_mesa,
+        total_votos_lista: datos.total_votos_lista,
+        total_sufragantes: datos.total_sufragantes,
+        observaciones: datos.observaciones,
+        observaciones_revisor: datos.observaciones_revisor,
+        tiene_tachaduras: datos.tiene_tachaduras,
+        hubo_reconteo: datos.hubo_reconteo,
+        hubo_reclamacion: datos.hubo_reclamacion,
+        tipo_reclamacion: datos.tipo_reclamacion,
+        actualizado_en: new Date().toISOString(),
+      } as never)
+      .eq("id", id);
+
+    if (errorUpdate) throw errorUpdate;
+
+    // 2. Actualizar votos de candidatos si se proporcionan
+    if (datos.votos && datos.votos.length > 0) {
+      for (const voto of datos.votos) {
+        const { error: errorVoto } = await supabase
+          .from("votos_candidato")
+          .upsert(
+            {
+              acta_id: id,
+              candidato_id: voto.candidato_id,
+              votos: voto.votos,
+            } as never,
+            { onConflict: "acta_id,candidato_id" },
+          );
+        if (errorVoto) throw errorVoto;
+      }
+    }
+
+    // 3. Actualizar votos por lista si se proporcionan
+    if (datos.votosLista && datos.votosLista.length > 0) {
+      for (const voto of datos.votosLista) {
+        const { error: errorVotoLista } = await supabase
+          .from("votos_lista")
+          .upsert(
+            {
+              acta_id: id,
+              partido_id: voto.partido_id,
+              votos: voto.votos,
+            } as never,
+            { onConflict: "acta_id,partido_id" },
+          );
+        if (errorVotoLista) throw errorVotoLista;
+      }
+    }
+  }
+
+  // 4. Cambiar estado a verificado
   const { data, error } = await supabase
     .from("actas_e14")
     .update({

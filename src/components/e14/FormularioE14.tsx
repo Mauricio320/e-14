@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { actaE14Schema, type ActaE14Input } from "@/lib/validations/schemas";
@@ -13,6 +13,8 @@ import {
   useCrearActa,
   useActualizarActa,
   useEnviarActa,
+  useVerificarActa,
+  useCorregirActa,
 } from "@/hooks/useActasE14";
 import { useUpsertVotos } from "@/hooks/useVotosCandidato";
 import { useUpsertVotosLista } from "@/hooks/useVotosLista";
@@ -31,6 +33,9 @@ interface FormularioE14Props {
   candidatos: CandidatoConPartido[];
   modoRevisor?: boolean;
   onSuccess?: () => void;
+  onAlertasChange?: (
+    alertas: { codigo: string; descripcion: string }[],
+  ) => void;
 }
 
 export function FormularioE14({
@@ -39,11 +44,14 @@ export function FormularioE14({
   candidatos,
   modoRevisor = false,
   onSuccess,
+  onAlertasChange,
 }: FormularioE14Props) {
   const [fotos, setFotos] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [observacionesRevisor, setObservacionesRevisor] = useState(
+    actaExistente?.observaciones_revisor || "",
+  );
 
-  // Map de alertas activas: codigo → { descripcion }
   const [alertas, setAlertas] = useState<Map<string, string>>(new Map());
 
   const handleAlertaChange = (
@@ -62,16 +70,26 @@ export function FormularioE14({
     });
   };
 
-  const alertasArray = Array.from(alertas.entries()).map(
-    ([codigo, descripcion]) => ({
-      codigo,
-      descripcion,
-    }),
+  // Usar useMemo para evitar recrear el array en cada render
+  const alertasArray = useMemo(
+    () =>
+      Array.from(alertas.entries()).map(([codigo, descripcion]) => ({
+        codigo,
+        descripcion,
+      })),
+    [alertas],
   );
+
+  // Notificar al padre cuando cambien las alertas calculadas
+  useEffect(() => {
+    onAlertasChange?.(alertasArray);
+  }, [alertasArray, onAlertasChange]);
 
   const crearActa = useCrearActa();
   const actualizarActa = useActualizarActa();
   const enviarActa = useEnviarActa();
+  const verificarActaMutation = useVerificarActa();
+  const corregirActaMutation = useCorregirActa();
   const upsertVotos = useUpsertVotos();
   const upsertVotosLista = useUpsertVotosLista();
   const upsertAlertas = useUpsertAlertas();
@@ -289,6 +307,60 @@ export function FormularioE14({
     }
   }
 
+  async function handleVerificarActa(data: ActaE14Input) {
+    if (!actaExistente?.id) return;
+
+    try {
+      setIsSubmitting(true);
+      showBlockUI("Verificando acta...");
+
+      // Preparar datos para verificación
+      const datosVerificacion = {
+        total_volantes_e11: data.totalVolantesE11,
+        total_votos_urna: data.totalVotosUrna,
+        total_votos_incinerados: data.totalVotosIncinerados,
+        votos_en_blanco: data.votosEnBlanco,
+        votos_nulos: data.votosNulos,
+        tarjetas_no_marcadas: data.tarjetasNoMarcadas,
+        total_votos_validos: data.totalVotosValidos,
+        total_votos_mesa: data.totalVotosMesa,
+        total_votos_lista: data.totalVotosLista,
+        total_sufragantes: data.totalSufragantes,
+        observaciones: data.observaciones,
+        tiene_tachaduras: data.tieneTachaduras,
+        hubo_reconteo: data.huboReconteo,
+        hubo_reclamacion: data.huboReclamacion,
+        tipo_reclamacion: data.tipoReclamacion,
+        votos: data.votos.map((v) => ({
+          candidato_id: v.candidatoId,
+          votos: v.votos,
+        })),
+        votosLista: data.votosPorLista.map((v) => ({
+          partido_id: v.partidoId,
+          votos: v.votos,
+        })),
+      };
+
+      updateMessage("Guardando datos y verificando acta...");
+      await verificarActaMutation.mutateAsync({
+        id: actaExistente.id,
+        datos: datosVerificacion,
+      });
+
+      updateMessage("¡Acta verificada exitosamente!");
+      onSuccess?.();
+      setTimeout(() => {
+        hideBlockUI();
+      }, 1000);
+    } catch (error) {
+      hideBlockUI();
+      console.error("Error al verificar acta:", error);
+      alert("Error al verificar el acta. Por favor intente nuevamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit(enviarActaFinal)} className="space-y-6">
       {/* Estado del acta */}
@@ -388,18 +460,35 @@ export function FormularioE14({
           )}
 
           {estaEnviado && modoRevisor && (
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-4">
+              {/* Observaciones del Revisor */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="observaciones-revisor"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Observaciones del Revisor{" "}
+                  <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <textarea
+                  id="observaciones-revisor"
+                  rows={3}
+                  value={observacionesRevisor}
+                  onChange={(e) => setObservacionesRevisor(e.target.value)}
+                  placeholder="Ingrese sus observaciones sobre la verificación..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                />
+              </div>
+
               <button
                 type="button"
-                className="flex-1 min-h-[48px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                onClick={handleSubmit(handleVerificarActa)}
+                disabled={isSubmitting || verificarActaMutation.isPending}
+                className="flex-1 min-h-[48px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
               >
-                Verificar Acta
-              </button>
-              <button
-                type="button"
-                className="flex-1 min-h-[48px] px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
-              >
-                Solicitar Corrección
+                {verificarActaMutation.isPending
+                  ? "Verificando..."
+                  : "Verificar Acta"}
               </button>
             </div>
           )}

@@ -27,6 +27,7 @@ export interface Database {
           total_votos_lista: number | null;
           total_sufragantes: number;
           observaciones: string | null;
+          observaciones_revisor: string | null;
           tiene_tachaduras: boolean | null;
           hubo_reconteo: boolean | null;
           hubo_reclamacion: boolean | null;
@@ -52,6 +53,7 @@ export interface Database {
           total_votos_mesa?: number;
           total_sufragantes?: number;
           observaciones?: string | null;
+          observaciones_revisor?: string | null;
           tiene_tachaduras?: boolean | null;
           hubo_reconteo?: boolean | null;
           hubo_reclamacion?: boolean | null;
@@ -79,6 +81,7 @@ export interface Database {
           total_votos_lista?: number | null;
           total_sufragantes?: number;
           observaciones?: string | null;
+          observaciones_revisor?: string | null;
           tiene_tachaduras?: boolean | null;
           hubo_reconteo?: boolean | null;
           hubo_reclamacion?: boolean | null;

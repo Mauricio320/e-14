@@ -43,7 +43,8 @@ async function fetchMesaData(mesaId: string): Promise<MesaData> {
       *,
       votos:votos_candidato (*),
       votosLista:votos_lista (*),
-      fotos:fotos_acta (*)
+      fotos:fotos_acta (*),
+      alertas:alertas_acta (*)
     `,
     )
     .eq("mesa_id", mesaId)

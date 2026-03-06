@@ -29,7 +29,7 @@ export default function RevisorPage() {
 
   async function handleVerificar(actaId: string) {
     if (!confirm("¿Está seguro de verificar este acta?")) return;
-    await verificarActa.mutateAsync(actaId);
+    await verificarActa.mutateAsync({ id: actaId });
   }
 
   async function handleCorregir(actaId: string) {

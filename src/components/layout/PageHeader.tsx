@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface PageHeaderProps {
-  title: string
-  subtitle?: string
-  backHref?: string
-  children?: React.ReactNode
+  title: string;
+  subtitle?: string;
+  backHref?: string;
+  children?: React.ReactNode;
 }
 
 export function PageHeader({
@@ -16,11 +16,11 @@ export function PageHeader({
   backHref,
   children,
 }: PageHeaderProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleBack = () => {
-    router.back()
-  }
+    router.back();
+  };
 
   const BackIcon = () => (
     <svg
@@ -36,10 +36,10 @@ export function PageHeader({
         d="M15 19l-7-7 7-7"
       />
     </svg>
-  )
+  );
 
   return (
-    <div className="mb-6 lg:mb-8">
+    <div className="mb-3 lg:mb-3">
       {/* Contenedor del header con boton integrado */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6 shadow-sm">
         <div className="flex items-center gap-3 lg:gap-4">
@@ -100,5 +100,5 @@ export function PageHeader({
         </div>
       </div>
     </div>
-  )
+  );
 }

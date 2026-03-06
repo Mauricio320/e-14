@@ -12,6 +12,7 @@ import {
   eliminarActa,
   obtenerEstadisticas,
   obtenerEstadoPuesto,
+  type VerificarActaInput,
 } from "@/servicios/actas-e14";
 import type { ActaE14, EstadoActa } from "@/types";
 
@@ -95,10 +96,16 @@ export function useVerificarActa() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: verificarActa,
-    onSuccess: (_, id) => {
+    mutationFn: ({
+      id,
+      datos,
+    }: {
+      id: string;
+      datos?: VerificarActaInput;
+    }) => verificarActa(id, datos),
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [ACTAS_KEY] });
-      queryClient.invalidateQueries({ queryKey: [ACTAS_KEY, id] });
+      queryClient.invalidateQueries({ queryKey: [ACTAS_KEY, variables.id] });
     },
   });
 }
