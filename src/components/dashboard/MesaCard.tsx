@@ -2,19 +2,25 @@
 
 import type { MesaConRelaciones } from "@/types";
 
+interface MesaCardProps {
+  mesa: MesaConRelaciones;
+  inSend?: boolean;
+  onClick: () => void;
+  isRevisor?: boolean;
+  status?: string;
+  testigoConfirmado?: boolean;
+  isCoordinadorPuesto?: boolean;
+}
+
 export function MesaCard({
   mesa,
   inSend,
   onClick,
   isRevisor,
   status,
-}: {
-  mesa: MesaConRelaciones;
-  inSend?: boolean;
-  onClick: () => void;
-  isRevisor?: boolean;
-  status?: string;
-}) {
+  testigoConfirmado,
+  isCoordinadorPuesto = false,
+}: MesaCardProps) {
   const totalAfluencia =
     mesa.afluencia_votantes?.reduce((acc, a) => acc + (a.cantidad || 0), 0) ||
     0;
@@ -49,6 +55,24 @@ export function MesaCard({
           {(inSend || isRevisor) && (
             <span className="inline-flex capitalize items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-2">
               {mesa?.actas_e14?.[0]?.estado}
+            </span>
+          )}
+          {testigoConfirmado && isCoordinadorPuesto && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 mt-2 ml-2">
+              <svg
+                className="w-3 h-3 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              Testigo OK
             </span>
           )}
         </div>

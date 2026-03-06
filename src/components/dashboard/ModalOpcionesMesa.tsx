@@ -9,6 +9,9 @@ interface ModalOpcionesMesaProps {
   onClose: () => void;
   mesa: MesaConRelaciones | null;
   onOpenAfluencia: () => void;
+  onConfirmarTestigo?: () => void;
+  mostrarConfirmarTestigo?: boolean;
+  isCordinador?: boolean;
 }
 
 export function ModalOpcionesMesa({
@@ -16,6 +19,9 @@ export function ModalOpcionesMesa({
   onClose,
   mesa,
   onOpenAfluencia,
+  onConfirmarTestigo,
+  isCordinador = false,
+  mostrarConfirmarTestigo = false,
 }: ModalOpcionesMesaProps) {
   return (
     <Modal
@@ -28,7 +34,9 @@ export function ModalOpcionesMesa({
           ¿Qué acción deseas realizar en esta mesa?
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div
+          className={`grid grid-cols-1 align-center ${mostrarConfirmarTestigo ? "md:grid-cols-2" : "md:grid-cols-2"} gap-4`}
+        >
           <Link
             href={`/mesa/${mesa?.id}`}
             className="flex flex-col items-center justify-center p-6 border-2 border-blue-100 rounded-xl hover:bg-blue-50 transition-colors group"
@@ -82,6 +90,35 @@ export function ModalOpcionesMesa({
               Reporte de cantidad de votantes por hora
             </span>
           </button>
+
+          {mostrarConfirmarTestigo && isCordinador && onConfirmarTestigo && (
+            <button
+              onClick={onConfirmarTestigo}
+              className="flex flex-col cursor-pointer items-center justify-center p-6 border-2 border-orange-100 rounded-xl hover:bg-orange-50 transition-colors group text-left"
+            >
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <svg
+                  className="w-8 h-8 text-orange-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
+              <span className="font-bold text-gray-900 text-center">
+                Confirmar Testigo
+              </span>
+              <span className="text-sm text-gray-500 text-center mt-2">
+                Confirmar presencia del testigo en mesa
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </Modal>

@@ -11,6 +11,7 @@ import {
   desasignarTestigoDeMesa,
   obtenerAsignacionesPorPuesto,
   obtenerMesasConActasPorPuesto,
+  confirmarTestigoEnMesa,
 } from "@/servicios/mesas";
 import type { Mesa } from "@/types";
 
@@ -131,5 +132,24 @@ export function useAsignacionesPorPuesto(puestoId: string) {
     queryKey: [MESAS_KEY, "asignaciones", puestoId],
     queryFn: () => obtenerAsignacionesPorPuesto(puestoId),
     enabled: !!puestoId,
+  });
+}
+
+export function useConfirmarTestigoMesa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      mesaId,
+      confirmado,
+      confirmadoPor,
+    }: {
+      mesaId: string;
+      confirmado: boolean;
+      confirmadoPor: string;
+    }) => confirmarTestigoEnMesa(mesaId, confirmado, confirmadoPor),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [MESAS_KEY] });
+    },
   });
 }

@@ -1,13 +1,16 @@
 "use client";
 
 import { useEstadisticasPuesto, usePuesto } from "@/hooks/usePuestosVotacion";
-import { useMesasConActasPorPuesto, useMesasPorPuesto } from "@/hooks/useMesas";
+import {
+  useMesasConActasPorPuesto,
+  useConfirmarTestigoMesa,
+} from "@/hooks/useMesas";
 import type { Profile, MesaConRelaciones } from "@/types";
-import Link from "next/link";
 import { MesaCard } from "./MesaCard";
 import { useEffect, useState } from "react";
 import { ModalAfluencia } from "./ModalAfluencia";
 import { ModalOpcionesMesa } from "./ModalOpcionesMesa";
+import { ModalConfirmarTestigo } from "./ModalConfirmarTestigo";
 
 interface DashboardCoordinadorPuestoProps {
   profile: Profile;
@@ -31,9 +34,11 @@ export function DashboardCoordinadorPuesto({
 
   const [mesaSeleccionada, setMesaSeleccionada] =
     useState<MesaConRelaciones | null>(null);
-  const [modalType, setModalType] = useState<"opciones" | "afluencia" | null>(
-    null,
-  );
+  const [modalType, setModalType] = useState<
+    "opciones" | "afluencia" | "confirmar_testigo" | null
+  >(null);
+
+  const confirmarTestigo = useConfirmarTestigoMesa();
 
   useEffect(() => {
     if (puestoId) {
@@ -53,6 +58,27 @@ export function DashboardCoordinadorPuesto({
 
   const openAfluencia = () => {
     setModalType("afluencia");
+  };
+
+  const openConfirmarTestigo = () => {
+    setModalType("confirmar_testigo");
+  };
+
+  const handleConfirmarTestigo = async () => {
+    if (!mesaSeleccionada) return;
+
+    try {
+      await confirmarTestigo.mutateAsync({
+        mesaId: mesaSeleccionada.id,
+        confirmado: true,
+        confirmadoPor: profile.id,
+      });
+      // Refetch para actualizar el listado de mesas
+      await refetch();
+      closeModals();
+    } catch (error) {
+      console.error("Error confirmando testigo:", error);
+    }
   };
 
   if (!puestoId) {
@@ -151,7 +177,9 @@ export function DashboardCoordinadorPuesto({
                     mesa?.actas_e14?.[0]?.estado === "enviado" ||
                     mesa?.actas_e14?.[0]?.estado === "verificado"
                   }
+                  testigoConfirmado={mesa.testigo_confirmado}
                   onClick={() => handleMesaClick(mesa)}
+                  isCoordinadorPuesto={true}
                 />
               ))}
             </div>
@@ -160,12 +188,15 @@ export function DashboardCoordinadorPuesto({
       </div>
 
       {/* --- Modals --- */}
-      {/* 1. Modal de Opciones (E-14 vs Afluencia) */}
+      {/* 1. Modal de Opciones (E-14 vs Afluencia vs Confirmar Testigo) */}
       <ModalOpcionesMesa
         isOpen={modalType === "opciones" && mesaSeleccionada !== null}
         onClose={closeModals}
         mesa={mesaSeleccionada}
         onOpenAfluencia={openAfluencia}
+        onConfirmarTestigo={openConfirmarTestigo}
+        mostrarConfirmarTestigo={!mesaSeleccionada?.testigo_confirmado}
+        isCordinador={true}
       />
 
       {/* 2. Modal de Afluencia */}
@@ -175,7 +206,15 @@ export function DashboardCoordinadorPuesto({
         mesa={mesaSeleccionada}
         profileId={profile.id}
       />
-      {/* Mesas */}
+
+      {/* 3. Modal de Confirmar Testigo */}
+      <ModalConfirmarTestigo
+        isOpen={modalType === "confirmar_testigo"}
+        onClose={closeModals}
+        mesa={mesaSeleccionada}
+        onConfirmar={handleConfirmarTestigo}
+        isLoading={confirmarTestigo.isPending}
+      />
     </div>
   );
 }

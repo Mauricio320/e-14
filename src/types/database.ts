@@ -219,6 +219,9 @@ export interface Database {
           numero_mesa: number;
           potencial_electoral: number;
           created_at: string;
+          testigo_confirmado: boolean;
+          testigo_confirmado_por: string | null;
+          testigo_confirmado_en: string | null;
           actas_e14?: { estado: string }[];
         };
         Insert: {
@@ -227,6 +230,9 @@ export interface Database {
           numero_mesa: number;
           potencial_electoral?: number;
           created_at?: string;
+          testigo_confirmado?: boolean;
+          testigo_confirmado_por?: string | null;
+          testigo_confirmado_en?: string | null;
         };
         Update: {
           id?: string;
@@ -234,6 +240,9 @@ export interface Database {
           numero_mesa?: number;
           potencial_electoral?: number;
           created_at?: string;
+          testigo_confirmado?: boolean;
+          testigo_confirmado_por?: string | null;
+          testigo_confirmado_en?: string | null;
         };
       };
       municipios: {
