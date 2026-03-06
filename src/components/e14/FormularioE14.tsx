@@ -168,11 +168,28 @@ export function FormularioE14({
   const puedeEditar = !actaExistente;
   const estaEnviado = actaExistente?.estado === "enviado";
 
-  // Preparar datos para envío - sin cálculos automáticos
-  // Los totales se ingresan manualmente por el testigo
+  // Preparar datos para envío - calcular totales automáticamente
   function prepararDatosEnvio(data: ActaE14Input) {
+    // Calcular totales basados en los votos ingresados
+    const totalVotosPorLista = data.votosPorLista.reduce(
+      (sum, v) => sum + (v.votos || 0),
+      0
+    );
+
+    const totalVotosMesa =
+      totalVotosPorLista +
+      (data.votosNulos || 0) +
+      (data.tarjetasNoMarcadas || 0) +
+      (data.votosEnBlanco || 0);
+
+    // Total Votos Válidos = Total Votos Lista + Votos en Blanco
+    const totalVotosValidos = totalVotosPorLista + (data.votosEnBlanco || 0);
+
     return {
       ...data,
+      totalVotosLista: totalVotosPorLista,
+      totalVotosMesa: totalVotosMesa,
+      totalVotosValidos: totalVotosValidos,
     };
   }
 

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Municipio, MunicipioConRelaciones, PuestoVotacion } from '@/types'
+import type { ConsolidadoMunicipio } from './consolidados'
 
 const supabase = createClient()
 
@@ -86,46 +87,50 @@ export async function obtenerEstadisticasMunicipio(municipioId: string): Promise
   mesasReportadas: number
   porcentajeReportado: number
 }> {
-  // Obtener puestos del municipio
-  const { data: puestos, error: errorPuestos } = await supabase
-    .from('puestos_votacion')
-    .select('id')
+  // Usar la tabla consolidada para obtener estadísticas pre-calculadas
+  const { data: consolidado, error } = await supabase
+    .from('consolidados_municipio')
+    .select('*')
     .eq('municipio_id', municipioId)
+    .single()
 
-  if (errorPuestos) throw errorPuestos
-
-  const puestoIds = (puestos as { id: string }[] | null)?.map(p => p.id) || []
-
-  // Contar mesas
-  const { count: totalMesas, error: errorMesas } = await supabase
-    .from('mesas')
-    .select('*', { count: 'exact', head: true })
-    .in('puesto_id', puestoIds.length > 0 ? puestoIds : [''])
-
-  // Obtener IDs de mesas
-  const { data: mesasData } = await supabase
-    .from('mesas')
-    .select('id')
-    .in('puesto_id', puestoIds.length > 0 ? puestoIds : [''])
-
-  const mesaIds = (mesasData as { id: string }[] | null)?.map(m => m.id) || []
-
-  // Contar actas reportadas
-  const { count: mesasReportadas, error: errorReportadas } = await supabase
-    .from('actas_e14')
-    .select('*', { count: 'exact', head: true })
-    .in('estado', ['enviado', 'verificado', 'corregido'])
-    .in('mesa_id', mesaIds.length > 0 ? mesaIds : [''])
-
-  if (errorMesas || errorReportadas) throw errorMesas || errorReportadas
-
-  const total = totalMesas || 0
-  const reportadas = mesasReportadas || 0
+  if (error) {
+    // Si no existe consolidado, retornar valores en cero
+    return {
+      totalPuestos: 0,
+      totalMesas: 0,
+      mesasReportadas: 0,
+      porcentajeReportado: 0,
+    }
+  }
 
   return {
-    totalPuestos: puestos?.length || 0,
-    totalMesas: total,
-    mesasReportadas: reportadas,
-    porcentajeReportado: total > 0 ? Math.round((reportadas / total) * 100) : 0,
+    totalPuestos: consolidado.total_puestos,
+    totalMesas: consolidado.total_mesas,
+    mesasReportadas: consolidado.mesas_reportadas,
+    porcentajeReportado: consolidado.porcentaje_reportado,
+  }
+}
+
+export async function obtenerMunicipioConConsolidado(
+  id: string
+): Promise<(Municipio & { consolidado: ConsolidadoMunicipio | null }) | null> {
+  const { data: municipio, error: errorMunicipio } = await supabase
+    .from('municipios')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (errorMunicipio || !municipio) return null
+
+  const { data: consolidado, error: errorConsolidado } = await supabase
+    .from('consolidados_municipio')
+    .select('*')
+    .eq('municipio_id', id)
+    .single()
+
+  return {
+    ...(municipio as Municipio),
+    consolidado: errorConsolidado ? null : (consolidado as ConsolidadoMunicipio),
   }
 }

@@ -1,24 +1,25 @@
-'use client'
+"use client";
 
-import { useEstadisticasMunicipio, useMunicipio } from '@/hooks/useMunicipios'
-import { usePuestosPorMunicipio } from '@/hooks/usePuestosVotacion'
-import type { Profile } from '@/types'
-import Link from 'next/link'
+import { useEstadisticasMunicipio, useMunicipio } from "@/hooks/useMunicipios";
+import { usePuestosPorMunicipio } from "@/hooks/usePuestosVotacion";
+import type { Profile } from "@/types";
+import Link from "next/link";
 
 interface DashboardCoordinadorMunicipalProps {
-  profile: Profile
+  profile: Profile;
 }
 
-export function DashboardCoordinadorMunicipal({ profile }: DashboardCoordinadorMunicipalProps) {
-  const municipioId = profile.municipio_id
+export function DashboardCoordinadorMunicipal({
+  profile,
+}: DashboardCoordinadorMunicipalProps) {
+  const municipioId = profile.municipio_id;
 
-  const { data: municipio } = useMunicipio(municipioId || '')
-  const { data: estadisticas, isLoading: loadingStats } = useEstadisticasMunicipio(
-    municipioId || ''
-  )
+  const { data: municipio } = useMunicipio(municipioId || "");
+  const { data: estadisticas, isLoading: loadingStats } =
+    useEstadisticasMunicipio(municipioId || "");
   const { data: puestos, isLoading: loadingPuestos } = usePuestosPorMunicipio(
-    municipioId || ''
-  )
+    municipioId || "",
+  );
 
   if (!municipioId) {
     return (
@@ -27,7 +28,7 @@ export function DashboardCoordinadorMunicipal({ profile }: DashboardCoordinadorM
           No tiene un municipio asignado. Contacte al administrador.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -123,13 +124,13 @@ export function DashboardCoordinadorMunicipal({ profile }: DashboardCoordinadorM
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 interface StatCardProps {
-  title: string
-  value: string | number
-  loading: boolean
+  title: string;
+  value: string | number;
+  loading: boolean;
 }
 
 function StatCard({ title, value, loading }: StatCardProps) {
@@ -142,5 +143,5 @@ function StatCard({ title, value, loading }: StatCardProps) {
         <p className="text-3xl font-bold text-gray-900">{value}</p>
       )}
     </div>
-  )
+  );
 }

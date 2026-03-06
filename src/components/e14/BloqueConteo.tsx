@@ -82,6 +82,9 @@ export function BloqueConteo({
   const totalVotosMesa =
     totalVotosPorLista + votosNulos + tarjetasNoMarcadas + votosEnBlanco;
 
+  // Total Votos Válidos = Total Votos Lista + Votos en Blanco
+  const totalVotosValidosCalculado = totalVotosPorLista + votosEnBlanco;
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -313,6 +316,21 @@ export function BloqueConteo({
             <div className="w-full h-[48px] px-4 flex items-center text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
               <span className="text-1xl text-gray-700">{totalVotosMesa}</span>
             </div>
+          </div>
+
+          {/* Total Votos Válidos - Calculado automáticamente */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Total Votos Válidos
+            </label>
+            <div className="w-full h-[48px] px-4 flex items-center text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 bg-green-50">
+              <span className="text-1xl font-semibold text-green-700">
+                {totalVotosValidosCalculado}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Total Votos Lista + Votos en Blanco
+            </p>
           </div>
         </div>
       </div>

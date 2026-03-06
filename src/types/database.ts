@@ -32,6 +32,77 @@ export interface Database {
           creado_en?: string;
         };
       };
+      consolidados_municipio: {
+        Row: {
+          id: string;
+          municipio_id: string;
+          total_puestos: number;
+          total_mesas: number;
+          mesas_reportadas: number;
+          porcentaje_reportado: number;
+          total_sufragantes: number;
+          total_votos_urna: number;
+          total_votos_incinerados: number;
+          votos_en_blanco: number;
+          votos_nulos: number;
+          tarjetas_no_marcadas: number;
+          total_votos_validos: number;
+          total_votos_mesa: number;
+          total_votos_lista: number;
+          actas_borrador: number;
+          actas_enviadas: number;
+          actas_verificadas: number;
+          actas_corregidas: number;
+          ultima_actualizacion: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          municipio_id: string;
+          total_puestos?: number;
+          total_mesas?: number;
+          mesas_reportadas?: number;
+          porcentaje_reportado?: number;
+          total_sufragantes?: number;
+          total_votos_urna?: number;
+          total_votos_incinerados?: number;
+          votos_en_blanco?: number;
+          votos_nulos?: number;
+          tarjetas_no_marcadas?: number;
+          total_votos_validos?: number;
+          total_votos_mesa?: number;
+          total_votos_lista?: number;
+          actas_borrador?: number;
+          actas_enviadas?: number;
+          actas_verificadas?: number;
+          actas_corregidas?: number;
+          ultima_actualizacion?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          municipio_id?: string;
+          total_puestos?: number;
+          total_mesas?: number;
+          mesas_reportadas?: number;
+          porcentaje_reportado?: number;
+          total_sufragantes?: number;
+          total_votos_urna?: number;
+          total_votos_incinerados?: number;
+          votos_en_blanco?: number;
+          votos_nulos?: number;
+          tarjetas_no_marcadas?: number;
+          total_votos_validos?: number;
+          total_votos_mesa?: number;
+          total_votos_lista?: number;
+          actas_borrador?: number;
+          actas_enviadas?: number;
+          actas_verificadas?: number;
+          actas_corregidas?: number;
+          ultima_actualizacion?: string;
+          created_at?: string;
+        };
+      };
       actas_e14: {
         Row: {
           id: string;
@@ -463,6 +534,58 @@ export interface Database {
           votos?: number;
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      consolidado_votos_candidato_municipio: {
+        Row: {
+          id: string;
+          municipio_id: string;
+          candidato_id: string;
+          votos: number;
+          ultima_actualizacion: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          municipio_id: string;
+          candidato_id: string;
+          votos?: number;
+          ultima_actualizacion?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          municipio_id?: string;
+          candidato_id?: string;
+          votos?: number;
+          ultima_actualizacion?: string;
+          created_at?: string;
+        };
+      };
+      consolidado_votos_lista_municipio: {
+        Row: {
+          id: string;
+          municipio_id: string;
+          partido_id: string;
+          votos_lista: number;
+          ultima_actualizacion: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          municipio_id: string;
+          partido_id: string;
+          votos_lista?: number;
+          ultima_actualizacion?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          municipio_id?: string;
+          partido_id?: string;
+          votos_lista?: number;
+          ultima_actualizacion?: string;
+          created_at?: string;
         };
       };
     };
