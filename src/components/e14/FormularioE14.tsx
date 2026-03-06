@@ -412,7 +412,7 @@ export function FormularioE14({
                 type="button"
                 onClick={handleSubmit(enviarActaFinal)}
                 disabled={isSubmitting}
-                className="w-full min-h-[48px] px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                className="w-full cursor-pointer min-h-[48px] px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
               >
                 {isSubmitting ? "Enviando..." : "Enviar Acta"}
               </button>

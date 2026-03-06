@@ -197,7 +197,7 @@ export async function obtenerMesasConActasPorPuesto(
         verificadoPor:verificado_por (*)
       ),
       afluencia_votantes (
-        cantidad, 
+        cantidad,
         hora_corte
       )
     `,
@@ -207,4 +207,24 @@ export async function obtenerMesasConActasPorPuesto(
 
   if (error) throw error;
   return (data as MesaConRelaciones[]) || [];
+}
+
+export async function confirmarTestigoEnMesa(
+  mesaId: string,
+  confirmado: boolean,
+  confirmadoPor: string,
+): Promise<Mesa> {
+  const { data, error } = await supabase
+    .from("mesas")
+    .update({
+      testigo_confirmado: confirmado,
+      testigo_confirmado_por: confirmadoPor,
+      testigo_confirmado_en: confirmado ? new Date().toISOString() : null,
+    } as never)
+    .eq("id", mesaId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Mesa;
 }
