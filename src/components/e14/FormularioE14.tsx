@@ -371,50 +371,7 @@ export function FormularioE14({
       />
       {/* Bloque de identificación */}
       <BloqueIdentificacion mesa={mesa} />
-      {/* Errores de validación */}
-      {Object.keys(errors).length > 0 && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <svg
-              className="w-5 h-5 text-red-500 mt-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div>
-              <h4 className="font-medium text-red-800">
-                Hay errores en el formulario:
-              </h4>
-              <ul className="mt-2 text-sm text-red-700 space-y-1">
-                {errors.votos?.message && <li>• {errors.votos.message}</li>}
-                {errors.totalVotosValidos?.message && (
-                  <li>• {errors.totalVotosValidos.message}</li>
-                )}
-                {errors.mesaId?.message && <li>• {errors.mesaId.message}</li>}
-                {Object.entries(errors).map(([key, error]) => {
-                  if (
-                    key === "votos" ||
-                    key === "totalVotosValidos" ||
-                    key === "mesaId"
-                  )
-                    return null;
-                  if (error?.message) {
-                    return <li key={key}>• {String(error.message)}</li>;
-                  }
-                  return null;
-                })}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
+
       {/* Bloque de conteo */}
       <BloqueConteo
         control={control}
@@ -424,7 +381,11 @@ export function FormularioE14({
         listaFields={listaFields}
         candidatos={candidatos}
         errors={errors}
-        disabled={!puedeEditar && !modoRevisor}
+        isRevisor={modoRevisor}
+        disabled={
+          (!puedeEditar && !modoRevisor) ||
+          actaExistente?.estado === "verificado"
+        }
         totales={{
           totalVotosValidos: watch("totalVotosValidos"),
           totalSufragantes: watch("totalSufragantes"),
@@ -437,12 +398,11 @@ export function FormularioE14({
         actaId={actaExistente?.id}
         fotos={fotos}
         setFotos={setFotos}
-        disabled={!puedeEditar}
+        disabled={!puedeEditar || actaExistente?.["estado "] === "verificado"}
         fotosExistentes={actaExistente?.fotos}
+        isRevisor={modoRevisor}
       />
 
-      {/* Panel de alertas */}
-      {alertasArray.length > 0 && <PanelAlertas alertas={alertasArray} />}
       {/* Acciones - Sticky en mobile */}
       {(puedeEditar || (estaEnviado && modoRevisor)) && (
         <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 -mx-4 lg:static lg:p-0 lg:border-0 lg:mx-0">
@@ -459,7 +419,7 @@ export function FormularioE14({
             </div>
           )}
 
-          {estaEnviado && modoRevisor && (
+          {modoRevisor && (
             <div className="flex flex-col gap-4">
               {/* Observaciones del Revisor */}
               <div className="space-y-2">

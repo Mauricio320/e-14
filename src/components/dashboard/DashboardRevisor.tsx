@@ -170,9 +170,9 @@ function MesaCard({
       className={`w-full cursor-pointer text-left p-6 border rounded-lg hover:shadow-sm transition-all flex flex-col justify-between h-full ${
         isRevisor
           ? status === "verificado"
-            ? "bg-orange-50 border-orange-200 hover:border-orange-500"
+            ? "bg-green-50 border-green-200 hover:border-green-500"
             : status === "enviado"
-              ? "bg-green-50 border-green-200 hover:border-green-500"
+              ? "bg-orange-50 border-orange-200 hover:border-orange-500"
               : ""
           : inSend
             ? "bg-green-50 border-green-200 hover:border-green-500"

@@ -61,6 +61,10 @@ export function MesaPageClient({ mesaId }: MesaPageClientProps) {
         title={`Acta E-14 - Mesa ${mesa.numero_mesa}`}
         subtitle={`${mesa.puesto?.nombre} • ${mesa.puesto?.municipio?.nombre}`}
       />
+      {/* Alertas calculadas en tiempo real */}
+      {alertasCalculadas.length > 0 && (
+        <PanelAlertas alertas={alertasCalculadas} />
+      )}
       <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Columna Izquierda: Formulario */}
         <div className="order-2 lg:order-1">
@@ -81,10 +85,6 @@ export function MesaPageClient({ mesaId }: MesaPageClientProps) {
 
         {/* Columna Derecha: Alertas y Visor de Fotos */}
         <div className="order-1 lg:order-2 lg:sticky lg:top-0 space-y-6">
-          {/* Alertas calculadas en tiempo real */}
-          {alertasCalculadas.length > 0 && (
-            <PanelAlertas alertas={alertasCalculadas} />
-          )}
           <VisorFotosRevision fotos={acta?.fotos || []} />
         </div>
       </div>
