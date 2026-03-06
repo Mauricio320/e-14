@@ -398,7 +398,7 @@ export function FormularioE14({
         actaId={actaExistente?.id}
         fotos={fotos}
         setFotos={setFotos}
-        disabled={!puedeEditar || actaExistente?.["estado "] === "verificado"}
+        disabled={!puedeEditar || actaExistente?.["estado"] === "verificado"}
         fotosExistentes={actaExistente?.fotos}
         isRevisor={modoRevisor}
       />
@@ -406,7 +406,7 @@ export function FormularioE14({
       {/* Acciones - Sticky en mobile */}
       {(puedeEditar || (estaEnviado && modoRevisor)) && (
         <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 -mx-4 lg:static lg:p-0 lg:border-0 lg:mx-0">
-          {puedeEditar && (
+          {puedeEditar && !modoRevisor && (
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
@@ -441,6 +441,7 @@ export function FormularioE14({
               </div>
 
               <button
+                hidden={modoRevisor && !estaEnviado}
                 type="button"
                 onClick={handleSubmit(handleVerificarActa)}
                 disabled={isSubmitting || verificarActaMutation.isPending}
