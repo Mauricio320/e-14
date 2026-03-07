@@ -209,7 +209,9 @@ export function BloqueConteo({
               <PartidoCandidatos
                 key={partidoId}
                 partido={partido}
-                candidatos={cands}
+                candidatos={cands.sort(
+                  (a, b) => (b.numero_lista || 0) - (a.numero_lista || 0),
+                )}
                 fields={fields}
                 listaFields={listaFields}
                 register={register}
