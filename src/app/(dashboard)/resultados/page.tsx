@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useResultadosElectorales } from "@/hooks/useResultadosElectorales";
-import { useMunicipios } from "@/hooks/useMunicipios";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { TablaResultados } from "@/components/resultados/TablaResultados";
-import { GraficoCurules } from "@/components/resultados/GraficoCurules";
 import { GraficoRepartoVotos } from "@/components/resultados/GraficoRepartoVotos";
+import { TablaResultados } from "@/components/resultados/TablaResultados";
 import { useEstadisticasGlobales } from "@/hooks/useConsolidados";
+import { useTotalMesas } from "@/hooks/useMesas";
+import { useMunicipios } from "@/hooks/useMunicipios";
+import { useResultadosElectorales } from "@/hooks/useResultadosElectorales";
+import { useState } from "react";
 
 export default function ResultadosPage() {
   const { data: estadisticas, isLoading: loadingStats } =
     useEstadisticasGlobales();
+  const { data: totalMesas } = useTotalMesas();
   const [municipioId, setMunicipioId] = useState<string>("");
   const { data: municipios } = useMunicipios();
   const { data: resultados, isLoading } = useResultadosElectorales(
@@ -114,7 +115,7 @@ export default function ResultadosPage() {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           <SummaryCard
             label="Total de Mesas"
-            value={String(estadisticas?.totalMesas || 0)}
+            value={String(totalMesas || 0)}
             icon={
               <svg
                 className="w-5 h-5"

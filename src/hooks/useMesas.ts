@@ -12,6 +12,7 @@ import {
   obtenerAsignacionesPorPuesto,
   obtenerMesasConActasPorPuesto,
   confirmarTestigoEnMesa,
+  obtenerTotalMesas,
 } from "@/servicios/mesas";
 import type { Mesa } from "@/types";
 
@@ -21,6 +22,13 @@ export function useMesas() {
   return useQuery({
     queryKey: [MESAS_KEY],
     queryFn: obtenerMesas,
+  });
+}
+
+export function useTotalMesas() {
+  return useQuery({
+    queryKey: [MESAS_KEY, "total"],
+    queryFn: obtenerTotalMesas,
   });
 }
 

@@ -1,61 +1,71 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import type { MesaConRelaciones, PuestoConRelaciones } from '@/types'
+"use client";
+
+import { use, useEffect } from "react";
+import Link from "next/link";
+import { MesaCard } from "@/components/dashboard/MesaCard";
+import { usePuesto } from "@/hooks/usePuestosVotacion";
+import { useMesasConActasPorPuesto } from "@/hooks/useMesas";
 
 interface PuestoPageProps {
   params: Promise<{
-    id: string
-  }>
+    id: string;
+  }>;
 }
 
-export default async function PuestoPage({ params }: PuestoPageProps) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function PuestoPage({ params }: PuestoPageProps) {
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
 
-  if (!user) {
-    redirect('/login')
+  const { data: puesto, isLoading: isLoadingPuesto } = usePuesto(id);
+  const {
+    data: mesas,
+    isLoading: isLoadingMesas,
+    refetch,
+  } = useMesasConActasPorPuesto(id);
+
+  useEffect(() => {
+    if (id) {
+      refetch();
+    }
+  }, [id, refetch]);
+
+  if (isLoadingPuesto || isLoadingMesas) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center text-gray-500">
+          Cargando datos del puesto...
+        </div>
+      </div>
+    );
   }
-
-  // Obtener el puesto
-  const { data: puesto } = await supabase
-    .from('puestos_votacion')
-    .select(`
-      *,
-      municipio:municipio_id (*)
-    `)
-    .eq('id', id)
-    .single() as { data: PuestoConRelaciones | null }
 
   if (!puesto) {
-    redirect('/')
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-500 mb-4">Puesto no encontrado</p>
+        <Link href="/" className="text-blue-600 hover:underline">
+          Volver al dashboard
+        </Link>
+      </div>
+    );
   }
 
-  // Obtener mesas del puesto
-  const { data: mesas } = await supabase
-    .from('mesas')
-    .select(`
-      *,
-      actas:actas_e14 (*)
-    `)
-    .eq('puesto_id', id)
-    .order('numero_mesa') as { data: Array<MesaConRelaciones & { actas: any[] }> | null }
-
   // Calcular estadísticas
-  const mesasConEstado = mesas?.map(mesa => {
-    const acta = mesa.actas?.[0]
+  const mesasConEstado = mesas?.map((mesa) => {
+    const acta = mesa.actas_e14?.[0];
     return {
       ...mesa,
-      estado: acta?.estado || 'pendiente',
-    }
-  })
+      estado: acta?.estado || "pendiente",
+    };
+  });
 
-  const totalMesas = mesas?.length || 0
-  const mesasReportadas = mesasConEstado?.filter(m =>
-    ['enviado', 'verificado', 'corregido'].includes(m.estado)
-  ).length || 0
-  const porcentaje = totalMesas > 0 ? Math.round((mesasReportadas / totalMesas) * 100) : 0
+  const totalMesas = mesas?.length || 0;
+  const mesasReportadas =
+    mesasConEstado?.filter((m) =>
+      ["enviado", "verificado", "corregido"].includes(m.estado),
+    ).length || 0;
+  const porcentaje =
+    totalMesas > 0 ? Math.round((mesasReportadas / totalMesas) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -69,9 +79,7 @@ export default async function PuestoPage({ params }: PuestoPageProps) {
         <p className="text-gray-600">
           {puesto.municipio?.nombre} • {puesto.direccion}
         </p>
-        <p className="text-sm text-gray-500 capitalize">
-          Zona {puesto.zona}
-        </p>
+        <p className="text-sm text-gray-500 capitalize">Zona {puesto.zona}</p>
       </div>
 
       {/* Estadísticas */}
@@ -106,47 +114,24 @@ export default async function PuestoPage({ params }: PuestoPageProps) {
           <h2 className="text-lg font-semibold text-gray-900">Mesas</h2>
         </div>
         <div className="p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-4">
             {mesasConEstado?.map((mesa) => {
-              const estadoColors: Record<string, string> = {
-                pendiente: 'bg-gray-100 border-gray-300',
-                borrador: 'bg-yellow-50 border-yellow-300',
-                enviado: 'bg-blue-50 border-blue-300',
-                verificado: 'bg-green-50 border-green-300',
-                corregido: 'bg-purple-50 border-purple-300',
-              }
-
-              const estadoLabels: Record<string, string> = {
-                pendiente: 'Pendiente',
-                borrador: 'Borrador',
-                enviado: 'Enviada',
-                verificado: 'Verificada',
-                corregido: 'Corregida',
-              }
-
               return (
-                <Link
+                <MesaCard
                   key={mesa.id}
+                  mesa={mesa as any}
+                  inSend={mesa?.actas_e14?.[0]?.estado === "enviado"}
                   href={`/mesa/${mesa.id}`}
-                  className={`p-4 border rounded-lg transition-all hover:shadow-sm ${
-                    estadoColors[mesa.estado] || 'bg-gray-100 border-gray-300'
-                  }`}
-                >
-                  <p className="text-2xl font-bold text-gray-900 text-center">
-                    {mesa.numero_mesa}
-                  </p>
-                  <p className="text-xs text-center text-gray-600 mt-1">
-                    {estadoLabels[mesa.estado] || 'Pendiente'}
-                  </p>
-                  <p className="text-xs text-center text-gray-400 mt-1">
-                    Potencial: {mesa.potencial_electoral}
-                  </p>
-                </Link>
-              )
+                  isRevisor={true}
+                  status={mesa?.actas_e14?.[0]?.estado}
+                  isCoordinadorPuesto={true}
+                  testigoConfirmado={mesa.testigo_confirmado}
+                />
+              );
             })}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
