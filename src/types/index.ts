@@ -23,6 +23,10 @@ export type TestigoMesa = Database["public"]["Tables"]["testigo_mesas"]["Row"];
 export type RevisorAsignacion =
   Database["public"]["Tables"]["revisor_asignaciones"]["Row"];
 export type AlertaActa = Database["public"]["Tables"]["alertas_acta"]["Row"];
+export type ConsolidadoVotosCandidatoMunicipio =
+  Database["public"]["Tables"]["consolidado_votos_candidato_municipio"]["Row"];
+export type ConsolidadoVotosListaMunicipio =
+  Database["public"]["Tables"]["consolidado_votos_lista_municipio"]["Row"];
 
 // Tipos con relaciones
 export type CandidatoConPartido = Candidato & { partido?: Partido };

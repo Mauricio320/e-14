@@ -1,131 +1,149 @@
-import { createClient } from '@/lib/supabase/client'
-import type { Municipio, MunicipioConRelaciones, PuestoVotacion } from '@/types'
+import { createClient } from "@/lib/supabase/client";
+import type {
+  Municipio,
+  MunicipioConRelaciones,
+  PuestoVotacion,
+} from "@/types";
+import type { ConsolidadoMunicipio } from "./consolidados";
 
-const supabase = createClient()
+const supabase = createClient();
 
 export async function obtenerMunicipios(): Promise<Municipio[]> {
   const { data, error } = await supabase
-    .from('municipios')
-    .select('*')
-    .order('nombre')
+    .from("municipios")
+    .select("*")
+    .order("nombre");
 
-  if (error) throw error
-  return data as Municipio[] || []
+  if (error) throw error;
+  return (data as Municipio[]) || [];
 }
 
-export async function obtenerMunicipioPorId(id: string): Promise<Municipio | null> {
+export async function obtenerMunicipioPorId(
+  id: string,
+): Promise<Municipio | null> {
   const { data, error } = await supabase
-    .from('municipios')
-    .select('*')
-    .eq('id', id)
-    .single()
+    .from("municipios")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (error) return null
-  return data as Municipio
+  if (error) return null;
+  return data as Municipio;
 }
 
-export async function obtenerMunicipioConPuestos(id: string): Promise<MunicipioConRelaciones | null> {
+export async function obtenerMunicipioConPuestos(
+  id: string,
+): Promise<MunicipioConRelaciones | null> {
   const { data, error } = await supabase
-    .from('municipios')
-    .select(`
+    .from("municipios")
+    .select(
+      `
       *,
       puestos:puestos_votacion (
         *,
         mesas:mesas (count)
       )
-    `)
-    .eq('id', id)
-    .single()
+    `,
+    )
+    .eq("id", id)
+    .single();
 
-  if (error) return null
+  if (error) return null;
 
   return {
     ...(data as unknown as MunicipioConRelaciones),
     actas_count: 0,
-  }
+  };
 }
 
-export async function crearMunicipio(municipio: Partial<Municipio>): Promise<Municipio> {
+export async function crearMunicipio(
+  municipio: Partial<Municipio>,
+): Promise<Municipio> {
   const { data, error } = await supabase
-    .from('municipios')
+    .from("municipios")
     .insert(municipio as never)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data as Municipio
+  if (error) throw error;
+  return data as Municipio;
 }
 
 export async function actualizarMunicipio(
   id: string,
-  municipio: Partial<Municipio>
+  municipio: Partial<Municipio>,
 ): Promise<Municipio> {
   const { data, error } = await supabase
-    .from('municipios')
+    .from("municipios")
     .update(municipio as never)
-    .eq('id', id)
+    .eq("id", id)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data as Municipio
+  if (error) throw error;
+  return data as Municipio;
 }
 
 export async function eliminarMunicipio(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('municipios')
-    .delete()
-    .eq('id', id)
+  const { error } = await supabase.from("municipios").delete().eq("id", id);
 
-  if (error) throw error
+  if (error) throw error;
 }
 
-export async function obtenerEstadisticasMunicipio(municipioId: string): Promise<{
-  totalPuestos: number
-  totalMesas: number
-  mesasReportadas: number
-  porcentajeReportado: number
+export async function obtenerEstadisticasMunicipio(
+  municipioId: string,
+): Promise<{
+  totalPuestos: number;
+  totalMesas: number;
+  mesasReportadas: number;
+  porcentajeReportado: number;
 }> {
-  // Obtener puestos del municipio
-  const { data: puestos, error: errorPuestos } = await supabase
-    .from('puestos_votacion')
-    .select('id')
-    .eq('municipio_id', municipioId)
+  // Usar la tabla consolidada para obtener estadísticas pre-calculadas
+  const { data: consolidado, error } = await supabase
+    .from("consolidados_municipio")
+    .select("*")
+    .eq("municipio_id", municipioId)
+    .single();
 
-  if (errorPuestos) throw errorPuestos
-
-  const puestoIds = (puestos as { id: string }[] | null)?.map(p => p.id) || []
-
-  // Contar mesas
-  const { count: totalMesas, error: errorMesas } = await supabase
-    .from('mesas')
-    .select('*', { count: 'exact', head: true })
-    .in('puesto_id', puestoIds.length > 0 ? puestoIds : [''])
-
-  // Obtener IDs de mesas
-  const { data: mesasData } = await supabase
-    .from('mesas')
-    .select('id')
-    .in('puesto_id', puestoIds.length > 0 ? puestoIds : [''])
-
-  const mesaIds = (mesasData as { id: string }[] | null)?.map(m => m.id) || []
-
-  // Contar actas reportadas
-  const { count: mesasReportadas, error: errorReportadas } = await supabase
-    .from('actas_e14')
-    .select('*', { count: 'exact', head: true })
-    .in('estado', ['enviado', 'verificado', 'corregido'])
-    .in('mesa_id', mesaIds.length > 0 ? mesaIds : [''])
-
-  if (errorMesas || errorReportadas) throw errorMesas || errorReportadas
-
-  const total = totalMesas || 0
-  const reportadas = mesasReportadas || 0
+  if (error) {
+    // Si no existe consolidado, retornar valores en cero
+    return {
+      totalPuestos: 0,
+      totalMesas: 0,
+      mesasReportadas: 0,
+      porcentajeReportado: 0,
+    };
+  }
 
   return {
-    totalPuestos: puestos?.length || 0,
-    totalMesas: total,
-    mesasReportadas: reportadas,
-    porcentajeReportado: total > 0 ? Math.round((reportadas / total) * 100) : 0,
-  }
+    totalPuestos: (consolidado as any).total_puestos,
+    totalMesas: (consolidado as any).total_mesas,
+    mesasReportadas: (consolidado as any).mesas_reportadas,
+    porcentajeReportado: (consolidado as any).porcentaje_reportado,
+  };
+}
+
+export async function obtenerMunicipioConConsolidado(
+  id: string,
+): Promise<(Municipio & { consolidado: ConsolidadoMunicipio | null }) | null> {
+  const { data: municipio, error: errorMunicipio } = await supabase
+    .from("municipios")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (errorMunicipio || !municipio) return null;
+
+  const { data: consolidado, error: errorConsolidado } = await supabase
+    .from("consolidados_municipio")
+    .select("*")
+    .eq("municipio_id", id)
+    .single();
+
+  return {
+    ...(municipio as Municipio),
+    consolidado: errorConsolidado
+      ? null
+      : (consolidado as ConsolidadoMunicipio),
+  };
 }

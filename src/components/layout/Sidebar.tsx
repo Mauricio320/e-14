@@ -34,6 +34,12 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
       ],
     },
     {
+      href: "/resultados",
+      label: "Resultados",
+      icon: <ReviewIcon />,
+      roles: ["maestro"],
+    },
+    {
       href: "/admin",
       label: "Administración",
       icon: <AdminIcon />,

@@ -3,6 +3,7 @@ import {
   obtenerMunicipios,
   obtenerMunicipioPorId,
   obtenerMunicipioConPuestos,
+  obtenerMunicipioConConsolidado,
   crearMunicipio,
   actualizarMunicipio,
   eliminarMunicipio,
@@ -31,6 +32,14 @@ export function useMunicipioConPuestos(id: string) {
   return useQuery({
     queryKey: [MUNICIPIOS_KEY, id, 'puestos'],
     queryFn: () => obtenerMunicipioConPuestos(id),
+    enabled: !!id,
+  })
+}
+
+export function useMunicipioConConsolidado(id: string) {
+  return useQuery({
+    queryKey: [MUNICIPIOS_KEY, id, 'consolidado'],
+    queryFn: () => obtenerMunicipioConConsolidado(id),
     enabled: !!id,
   })
 }

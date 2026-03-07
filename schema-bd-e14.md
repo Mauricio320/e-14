@@ -208,14 +208,159 @@ Log de auditoría de todas las acciones sobre la base de datos.
 
 ---
 
+### `votos_lista`
+
+Votos por lista (partido) dentro de un acta.
+
+| Campo          | Tipo                  | Descripción                    |
+| -------------- | --------------------- | ------------------------------ |
+| `id`           | uuid (PK)             | Identificador único            |
+| `acta_id`      | uuid (FK → actas_e14) | Acta a la que pertenece        |
+| `partido_id`   | uuid (FK → partidos)  | Partido votado                 |
+| `votos`        | integer               | Cantidad de votos (default: 0) |
+| `created_at`   | timestamptz           | Fecha de creación              |
+| `updated_at`   | timestamptz           | Última actualización           |
+
+---
+
+### `alertas_acta`
+
+Alertas generadas automáticamente al detectar inconsistencias en el acta.
+
+| Campo          | Tipo                  | Descripción                    |
+| -------------- | --------------------- | ------------------------------ |
+| `id`           | uuid (PK)             | Identificador único            |
+| `acta_id`      | uuid (FK → actas_e14) | Acta asociada                  |
+| `codigo`       | varchar               | Código de la alerta            |
+| `descripcion`  | text                  | Descripción detallada          |
+| `creado_en`    | timestamptz           | Fecha de creación              |
+
+---
+
+### `afluencia_votantes`
+
+Registro de afluencia de votantes por hora.
+
+| Campo            | Tipo                  | Descripción                    |
+| ---------------- | --------------------- | ------------------------------ |
+| `id`             | uuid (PK)             | Identificador único            |
+| `mesa_id`        | uuid (FK → mesas)     | Mesa asociada                  |
+| `hora_corte`     | varchar               | Hora de corte (ej: "10:00")    |
+| `cantidad`       | integer               | Cantidad de votantes           |
+| `registrado_por` | uuid (FK → profiles)  | Usuario que registró           |
+| `creado_en`      | timestamptz           | Fecha de creación              |
+
+---
+
+### `consolidados_municipio`
+
+Consolidado de estadísticas por municipio para consultas rápidas.
+
+| Campo                   | Tipo                    | Descripción                              |
+| ----------------------- | ----------------------- | ---------------------------------------- |
+| `id`                    | uuid (PK)               | Identificador único                      |
+| `municipio_id`          | uuid (FK → municipios)  | Municipio (UNIQUE)                       |
+| `total_puestos`         | integer                 | Total de puestos de votación             |
+| `total_mesas`           | integer                 | Total de mesas                           |
+| `mesas_reportadas`      | integer                 | Mesas con acta reportada                 |
+| `porcentaje_reportado`  | integer                 | Porcentaje de avance                     |
+| `total_sufragantes`     | integer                 | Total de sufragantes                     |
+| `total_votos_urna`      | integer                 | Total votos en urna                      |
+| `total_votos_incinerados`| integer                | Votos incinerados                        |
+| `votos_en_blanco`       | integer                 | Votos en blanco                          |
+| `votos_nulos`           | integer                 | Votos nulos                              |
+| `tarjetas_no_marcadas`  | integer                 | Tarjetas no marcadas                     |
+| `total_votos_validos`   | integer                 | Total votos válidos                      |
+| `total_votos_mesa`      | integer                 | Total votos por mesa                     |
+| `total_votos_lista`     | integer                 | Total votos por lista                    |
+| `actas_borrador`        | integer                 | Conteo de actas en borrador              |
+| `actas_enviadas`        | integer                 | Conteo de actas enviadas                 |
+| `actas_verificadas`     | integer                 | Conteo de actas verificadas              |
+| `actas_corregidas`      | integer                 | Conteo de actas corregidas               |
+| `ultima_actualizacion`  | timestamptz             | Última actualización                     |
+| `created_at`            | timestamptz             | Fecha de creación                        |
+
+---
+
+### `consolidado_votos_candidato_municipio`
+
+Votos consolidados por candidato en cada municipio.
+
+| Campo                   | Tipo                    | Descripción                              |
+| ----------------------- | ----------------------- | ---------------------------------------- |
+| `id`                    | uuid (PK)               | Identificador único                      |
+| `municipio_id`          | uuid (FK → municipios)  | Municipio                                |
+| `candidato_id`          | uuid (FK → candidatos)  | Candidato                                |
+| `votos`                 | integer                 | Total de votos acumulados                |
+| `ultima_actualizacion`  | timestamptz             | Última actualización                     |
+| `created_at`            | timestamptz             | Fecha de creación                        |
+
+**Índice único:** (`municipio_id`, `candidato_id`)
+
+---
+
+### `consolidado_votos_lista_municipio`
+
+Votos consolidados por lista (partido) en cada municipio.
+
+| Campo                   | Tipo                    | Descripción                              |
+| ----------------------- | ----------------------- | ---------------------------------------- |
+| `id`                    | uuid (PK)               | Identificador único                      |
+| `municipio_id`          | uuid (FK → municipios)  | Municipio                                |
+| `partido_id`            | uuid (FK → partidos)    | Partido                                  |
+| `votos_lista`           | integer                 | Total de votos por lista                 |
+| `ultima_actualizacion`  | timestamptz             | Última actualización                     |
+| `created_at`            | timestamptz             | Fecha de creación                        |
+
+**Índice único:** (`municipio_id`, `partido_id`)
+
+---
+
 ## Tipos enumerados (ENUMs)
 
-| Enum          | Valores                             |
-| ------------- | ----------------------------------- |
-| `estado_enum` | `borrador`, `enviado`, `verificado` |
-| `role_enum`   | `testigo`, `revisor`, `admin`       |
-| `zona_enum`   | `urbana`, `rural`                   |
+| Enum          | Valores                                           |
+| ------------- | ------------------------------------------------- |
+| `estado_enum` | `borrador`, `enviado`, `verificado`, `corregido`  |
+| `role_enum`   | `maestro`, `revisor`, `coordinador_municipal`, `coordinador_puesto`, `testigo` |
+| `zona_enum`   | `urbana`, `rural`                                 |
 
 ---
 
 ## Relaciones clave
+
+### Jerarquía geográfica
+```
+municipios (1) → puestos_votacion (N) → mesas (N) → actas_e14 (1)
+```
+
+### Votos
+```
+actas_e14 (1) → votos_candidato (N) → candidatos (N) → partidos (1)
+actas_e14 (1) → votos_lista (N) → partidos (1)
+```
+
+### Usuarios y asignaciones
+```
+profiles (testigo) → testigo_mesas → mesas
+profiles (revisor) → revisor_asignaciones → municipios/puestos_votacion
+```
+
+### Consolidados (actualización automática vía triggers)
+```
+actas_e14 + votos_candidato + votos_lista → consolidados_municipio
+actas_e14 + votos_candidato → consolidado_votos_candidato_municipio
+actas_e14 + votos_lista → consolidado_votos_lista_municipio
+```
+
+---
+
+## Triggers principales
+
+| Trigger | Tabla | Descripción |
+|---------|-------|-------------|
+| `trigger_actualizar_consolidado` | `actas_e14` | Actualiza consolidados_municipio al cambiar un acta |
+| `trigger_actualizar_votos_municipio` | `actas_e14` | Actualiza consolidados de votos al cambiar un acta |
+| `trigger_actualizar_votos_candidato` | `votos_candidato` | Actualiza consolidados cuando cambian votos de candidatos |
+| `trigger_actualizar_votos_lista` | `votos_lista` | Actualiza consolidados cuando cambian votos por lista |
+| `audit_trigger` | Todas las tablas | Registra cambios en auditoria_cambios |
+| `handle_new_user` | `auth.users` | Crea perfil automáticamente al registrar usuario |

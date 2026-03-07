@@ -120,12 +120,14 @@ export function FormularioE14({
     resolver: zodResolver(actaE14Schema),
     defaultValues: {
       mesaId: mesa.id,
-      votos: candidatos.map((c) => ({
-        candidatoId: c.id,
-        votos:
-          actaExistente?.votos?.find((v) => v.candidato_id === c.id)?.votos ||
-          0,
-      })),
+      votos: candidatos.map((c) => {
+        return {
+          candidatoId: c.id,
+          votos:
+            actaExistente?.votos?.find((v) => v.candidato_id === c.id)?.votos ||
+            0,
+        };
+      }),
       votosPorLista: partidosUnicos.map((p) => ({
         partidoId: p?.id || "",
         votos:
@@ -168,11 +170,28 @@ export function FormularioE14({
   const puedeEditar = !actaExistente;
   const estaEnviado = actaExistente?.estado === "enviado";
 
-  // Preparar datos para envío - sin cálculos automáticos
-  // Los totales se ingresan manualmente por el testigo
+  // Preparar datos para envío - calcular totales automáticamente
   function prepararDatosEnvio(data: ActaE14Input) {
+    // Calcular totales basados en los votos ingresados
+    const totalVotosPorLista = data.votosPorLista.reduce(
+      (sum, v) => sum + (v.votos || 0),
+      0,
+    );
+
+    const totalVotosMesa =
+      totalVotosPorLista +
+      (data.votosNulos || 0) +
+      (data.tarjetasNoMarcadas || 0) +
+      (data.votosEnBlanco || 0);
+
+    // Total Votos Válidos = Total Votos Lista + Votos en Blanco
+    const totalVotosValidos = totalVotosPorLista + (data.votosEnBlanco || 0);
+
     return {
       ...data,
+      totalVotosLista: totalVotosPorLista,
+      totalVotosMesa: totalVotosMesa,
+      totalVotosValidos: totalVotosValidos,
     };
   }
 

@@ -1391,7 +1391,7 @@ function AsignacionesCoordinadoresTab() {
                               onClick={() =>
                                 iniciarEdicion(
                                   puesto.id,
-                                  coordinadorAsignado.id
+                                  coordinadorAsignado.id,
                                 )
                               }
                               className="text-blue-600 hover:text-blue-800 text-sm"
