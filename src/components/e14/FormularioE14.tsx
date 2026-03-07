@@ -120,12 +120,14 @@ export function FormularioE14({
     resolver: zodResolver(actaE14Schema),
     defaultValues: {
       mesaId: mesa.id,
-      votos: candidatos.map((c) => ({
-        candidatoId: c.id,
-        votos:
-          actaExistente?.votos?.find((v) => v.candidato_id === c.id)?.votos ||
-          0,
-      })),
+      votos: candidatos.map((c) => {
+        return {
+          candidatoId: c.id,
+          votos:
+            actaExistente?.votos?.find((v) => v.candidato_id === c.id)?.votos ||
+            0,
+        };
+      }),
       votosPorLista: partidosUnicos.map((p) => ({
         partidoId: p?.id || "",
         votos:
@@ -173,7 +175,7 @@ export function FormularioE14({
     // Calcular totales basados en los votos ingresados
     const totalVotosPorLista = data.votosPorLista.reduce(
       (sum, v) => sum + (v.votos || 0),
-      0
+      0,
     );
 
     const totalVotosMesa =

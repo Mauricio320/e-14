@@ -342,6 +342,7 @@ export interface Database {
           nombre: string;
           codigo: string;
           color_hex: string;
+          img?: string;
           activo: boolean;
           created_at: string;
         };
@@ -350,6 +351,7 @@ export interface Database {
           nombre: string;
           codigo: string;
           color_hex?: string;
+          img?: string;
           activo?: boolean;
           created_at?: string;
         };
@@ -358,6 +360,7 @@ export interface Database {
           nombre?: string;
           codigo?: string;
           color_hex?: string;
+          img?: string;
           activo?: boolean;
           created_at?: string;
         };
