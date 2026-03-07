@@ -260,27 +260,31 @@ export function BloqueEvidencia({
 
   const eliminarFoto = useCallback(
     (index: number) => {
-      const nuevasFotos = [...fotos];
-      nuevasFotos.splice(index, 1);
-      setFotos(nuevasFotos);
+      // 1. Usar filter en lugar de splice para evitar mutación de estado
+      setFotos(fotos.filter((_, i) => i !== index));
 
-      // Actualizar map de info
+      // 2. Actualizar map de info de manera inmutable
       setFotosInfo((prev) => {
-        const nuevoInfo = new Map(prev);
-        nuevoInfo.delete(index);
-        // Reindexar entradas posteriores
-        const reindexed = new Map<number, FotoConCompression>();
-        nuevoInfo.forEach((value, key) => {
-          if (key > index) {
-            reindexed.set(key - 1, value);
-          } else {
-            reindexed.set(key, value);
+        const nuevoInfo = new Map<number, FotoConCompression>();
+
+        let newIndex = 0;
+        // Recorremos el original ordenadamente
+        for (let oldIndex = 0; oldIndex <= prev.size; oldIndex++) {
+          if (oldIndex === index) {
+            continue; // Saltamos el eliminado
           }
-        });
-        return reindexed;
+
+          const value = prev.get(oldIndex);
+          if (value) {
+            nuevoInfo.set(newIndex, value);
+            newIndex++;
+          }
+        }
+
+        return nuevoInfo;
       });
     },
-    [setFotos],
+    [fotos, setFotos],
   );
 
   return (

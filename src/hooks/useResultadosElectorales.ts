@@ -24,11 +24,11 @@ export function useResultadosElectorales(municipioId?: string) {
           table: "actas_e14",
         },
         () => {
-          // Cuando hay un cambio en un acta, invalidamos la caché
-          // Esto forzará a React Query a volver a ejecutar queryFn
-          queryClient.invalidateQueries({
-            queryKey: [RESULTADOS_KEY],
-          });
+          setTimeout(() => {
+            queryClient.invalidateQueries({
+              queryKey: [RESULTADOS_KEY],
+            });
+          }, 1500);
         },
       )
       .subscribe();

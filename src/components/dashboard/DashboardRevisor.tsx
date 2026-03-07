@@ -137,6 +137,8 @@ export function DashboardRevisor({ profile }: DashboardRevisorProps) {
                   onClick={() => router.push(`/revicion-mesa/${mesa.id}`)}
                   isRevisor={true}
                   status={mesa?.actas_e14?.[0]?.estado}
+                  isCoordinadorPuesto={true}
+                  testigoConfirmado={mesa.testigo_confirmado}
                 />
               ))}
             </div>
