@@ -148,9 +148,9 @@ export async function obtenerTotalesVotosPorMunicipio(
   if (errorListas) throw errorListas;
 
   const totalVotosCandidatos =
-    candidatos?.reduce((sum, c) => sum + (c.votos || 0), 0) || 0;
+    candidatos?.reduce((sum, c: any) => sum + (c.votos || 0), 0) || 0;
   const totalVotosLista =
-    listas?.reduce((sum, l) => sum + (l.votos_lista || 0), 0) || 0;
+    listas?.reduce((sum, l: any) => sum + (l.votos_lista || 0), 0) || 0;
 
   return {
     totalVotosCandidatos,
