@@ -33,6 +33,27 @@ interface BloqueConteoProps {
   ) => void;
 }
 
+/**
+ * Componente local para estandarizar los inputs numéricos del formulario.
+ * Reduce la duplicación de clases y atributos comunes.
+ */
+const NumericInput = ({
+  disabled,
+  placeholder = "0",
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <input
+    {...props}
+    type="number"
+    min="0"
+    inputMode="numeric"
+    pattern="[0-9]*"
+    disabled={disabled}
+    className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+    placeholder={placeholder}
+  />
+);
+
 export function BloqueConteo({
   control,
   register,
@@ -94,28 +115,25 @@ export function BloqueConteo({
 
     debounceRef.current = setTimeout(() => {
       // Alerta 1: E11 < (Urna - Incinerados)
-      const totalVotos = totalVotosUrna - totalVotosIncinerados;
-      const condicion1 =
-        totalVolantesE11 < totalVotosUrna - totalVotosIncinerados;
+      const totalVotosReal = totalVotosUrna - totalVotosIncinerados;
+      const condicion1 = totalVolantesE11 < totalVotosReal;
       if (condicion1 && totalVotosUrna > 0) {
         onAlertaChange(
           "E11_MENOR_QUE_URNA_MENOS_INCINERADOS",
           true,
-          `Nivelación de Mesa: El total de volantes E-11 (${totalVolantesE11}) es menor que los votos en la urna menos los incinerados (${totalVotosUrna} - ${totalVotosIncinerados} = ${
-            totalVotos
-          }).`,
+          `Nivelación de Mesa: El total de volantes E-11 (${totalVolantesE11}) es menor que los votos en la urna menos los incinerados (${totalVotosUrna} - ${totalVotosIncinerados} = ${totalVotosReal}).`,
         );
       } else {
         onAlertaChange("E11_MENOR_QUE_URNA_MENOS_INCINERADOS", false);
       }
 
       // Alerta 2: E11 !== Total Votos Mesa
-      const condicion2 = totalVolantesE11 !== totalVotos;
-      if (condicion2 && (totalVolantesE11 > 0 || totalVotos > 0)) {
+      const condicion2 = totalVolantesE11 !== totalVotosReal;
+      if (condicion2 && (totalVolantesE11 > 0 || totalVotosReal > 0)) {
         onAlertaChange(
           "E11_DIFERENTE_TOTAL_MESA",
           true,
-          `Totalizaciones: El total de volantes E-11 (${totalVolantesE11}) no coincide con el total de votos en la mesa (${totalVotos}).`,
+          `Totalizaciones: El total de volantes E-11 (${totalVolantesE11}) no coincide con el total de votos en la mesa (${totalVotosReal}).`,
         );
       } else {
         onAlertaChange("E11_DIFERENTE_TOTAL_MESA", false);
@@ -146,15 +164,9 @@ export function BloqueConteo({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Total Volantes Formulario E-11
             </label>
-            <input
+            <NumericInput
               {...register("totalVolantesE11", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
               disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
 
@@ -162,15 +174,9 @@ export function BloqueConteo({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Total Votos de Cámara en la Urna
             </label>
-            <input
+            <NumericInput
               {...register("totalVotosUrna", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
               disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
 
@@ -178,15 +184,9 @@ export function BloqueConteo({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Total Votos Incinerados
             </label>
-            <input
+            <NumericInput
               {...register("totalVotosIncinerados", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
               disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
         </div>
@@ -201,9 +201,10 @@ export function BloqueConteo({
         <div className="divide-y divide-gray-200">
           {Object.entries(candidatosPorPartido)
             .sort(([, a], [, b]) => {
-              const nameA = a.partido?.nombre || "";
-              const nameB = b.partido?.nombre || "";
-              return nameA.localeCompare(nameB);
+              const orderA = a.partido?.order || 0;
+              const orderB = b.partido?.order || 0;
+
+              return orderA - orderB;
             })
             .map(([partidoId, { partido, candidatos: cands }]) => (
               <PartidoCandidatos
@@ -234,45 +235,27 @@ export function BloqueConteo({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Votos nulos
             </label>
-            <input
+            <NumericInput
               {...register("votosNulos", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
               disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               votos no marcados
             </label>
-            <input
+            <NumericInput
               {...register("tarjetasNoMarcadas", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
               disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Votos en blanco
             </label>
-            <input
+            <NumericInput
               {...register("votosEnBlanco", { valueAsNumber: true })}
-              type="number"
-              min="0"
-              inputMode="numeric"
-              pattern="[0-9]*"
               disabled={disabled}
-              className="w-full min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-              placeholder="0"
             />
           </div>
         </div>

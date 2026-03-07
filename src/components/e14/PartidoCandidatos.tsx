@@ -81,8 +81,14 @@ export function PartidoCandidatos({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hayDiscrepancia, sumaCandidatos, votosPorLista]);
+  }, [
+    hayDiscrepancia,
+    sumaCandidatos,
+    votosPorLista,
+    onAlertaChange,
+    listaFieldIndex,
+    partido,
+  ]);
 
   return (
     <div className="p-4">

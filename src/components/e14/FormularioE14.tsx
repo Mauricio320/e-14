@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { actaE14Schema, type ActaE14Input } from "@/lib/validations/schemas";
@@ -8,13 +8,11 @@ import { BloqueIdentificacion } from "./BloqueIdentificacion";
 import { BloqueConteo } from "./BloqueConteo";
 import { BloqueEvidencia } from "./BloqueEvidencia";
 import { EstadosActa } from "./EstadosActa";
-import { PanelAlertas } from "./PanelAlertas";
 import {
   useCrearActa,
   useActualizarActa,
   useEnviarActa,
   useVerificarActa,
-  useCorregirActa,
 } from "@/hooks/useActasE14";
 import { useUpsertVotos } from "@/hooks/useVotosCandidato";
 import { useUpsertVotosLista } from "@/hooks/useVotosLista";
@@ -51,26 +49,23 @@ export function FormularioE14({
   const [observacionesRevisor, setObservacionesRevisor] = useState(
     actaExistente?.observaciones_revisor || "",
   );
-
   const [alertas, setAlertas] = useState<Map<string, string>>(new Map());
 
-  const handleAlertaChange = (
-    codigo: string,
-    activa: boolean,
-    descripcion?: string,
-  ) => {
-    setAlertas((prev) => {
-      const next = new Map(prev);
-      if (activa && descripcion) {
-        next.set(codigo, descripcion);
-      } else {
-        next.delete(codigo);
-      }
-      return next;
-    });
-  };
+  const handleAlertaChange = useCallback(
+    (codigo: string, activa: boolean, descripcion?: string) => {
+      setAlertas((prev) => {
+        const next = new Map(prev);
+        if (activa && descripcion) {
+          next.set(codigo, descripcion);
+        } else {
+          next.delete(codigo);
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
-  // Usar useMemo para evitar recrear el array en cada render
   const alertasArray = useMemo(
     () =>
       Array.from(alertas.entries()).map(([codigo, descripcion]) => ({
@@ -80,7 +75,6 @@ export function FormularioE14({
     [alertas],
   );
 
-  // Notificar al padre cuando cambien las alertas calculadas
   useEffect(() => {
     onAlertasChange?.(alertasArray);
   }, [alertasArray, onAlertasChange]);
@@ -89,25 +83,27 @@ export function FormularioE14({
   const actualizarActa = useActualizarActa();
   const enviarActa = useEnviarActa();
   const verificarActaMutation = useVerificarActa();
-  const corregirActaMutation = useCorregirActa();
   const upsertVotos = useUpsertVotos();
   const upsertVotosLista = useUpsertVotosLista();
   const upsertAlertas = useUpsertAlertas();
   const { showBlockUI, updateMessage, updateProgress, hideBlockUI } =
     useBlockUI();
 
-  // Obtener partidos únicos de los candidatos
-  const partidosUnicos = candidatos.reduce(
-    (acc, candidato) => {
-      if (
-        candidato.partido &&
-        !acc.find((p) => p?.id === candidato.partido_id)
-      ) {
-        acc.push(candidato.partido);
-      }
-      return acc;
-    },
-    [] as (typeof candidatos)[0]["partido"][],
+  const partidosUnicos = useMemo(
+    () =>
+      candidatos.reduce(
+        (acc, candidato) => {
+          if (
+            candidato.partido &&
+            !acc.find((p) => p?.id === candidato.partido_id)
+          ) {
+            acc.push(candidato.partido);
+          }
+          return acc;
+        },
+        [] as (typeof candidatos)[0]["partido"][],
+      ),
+    [candidatos],
   );
 
   const {
@@ -120,14 +116,12 @@ export function FormularioE14({
     resolver: zodResolver(actaE14Schema),
     defaultValues: {
       mesaId: mesa.id,
-      votos: candidatos.map((c) => {
-        return {
-          candidatoId: c.id,
-          votos:
-            actaExistente?.votos?.find((v) => v.candidato_id === c.id)?.votos ||
-            0,
-        };
-      }),
+      votos: candidatos.map((c) => ({
+        candidatoId: c.id,
+        votos:
+          actaExistente?.votos?.find((v) => v.candidato_id === c.id)?.votos ||
+          0,
+      })),
       votosPorLista: partidosUnicos.map((p) => ({
         partidoId: p?.id || "",
         votos:
@@ -157,11 +151,7 @@ export function FormularioE14({
     },
   });
 
-  const { fields } = useFieldArray({
-    control,
-    name: "votos",
-  });
-
+  const { fields } = useFieldArray({ control, name: "votos" });
   const { fields: listaFields } = useFieldArray({
     control,
     name: "votosPorLista",
@@ -170,154 +160,129 @@ export function FormularioE14({
   const puedeEditar = !actaExistente;
   const estaEnviado = actaExistente?.estado === "enviado";
 
-  // Preparar datos para envío - calcular totales automáticamente
+  const hideBlockUIDelayed = useCallback(() => {
+    setTimeout(() => hideBlockUI(), 1000);
+  }, [hideBlockUI]);
+
   function prepararDatosEnvio(data: ActaE14Input) {
-    // Calcular totales basados en los votos ingresados
     const totalVotosPorLista = data.votosPorLista.reduce(
       (sum, v) => sum + (v.votos || 0),
       0,
     );
-
     const totalVotosMesa =
       totalVotosPorLista +
       (data.votosNulos || 0) +
       (data.tarjetasNoMarcadas || 0) +
       (data.votosEnBlanco || 0);
-
-    // Total Votos Válidos = Total Votos Lista + Votos en Blanco
     const totalVotosValidos = totalVotosPorLista + (data.votosEnBlanco || 0);
 
     return {
       ...data,
       totalVotosLista: totalVotosPorLista,
-      totalVotosMesa: totalVotosMesa,
-      totalVotosValidos: totalVotosValidos,
+      totalVotosMesa,
+      totalVotosValidos,
     };
+  }
+
+  function mapearDatosActa(datos: ReturnType<typeof prepararDatosEnvio>) {
+    return {
+      total_volantes_e11: datos.totalVolantesE11,
+      total_votos_urna: datos.totalVotosUrna,
+      total_votos_incinerados: datos.totalVotosIncinerados,
+      votos_en_blanco: datos.votosEnBlanco,
+      votos_nulos: datos.votosNulos,
+      tarjetas_no_marcadas: datos.tarjetasNoMarcadas,
+      total_votos_validos: datos.totalVotosValidos,
+      total_votos_mesa: datos.totalVotosMesa,
+      total_votos_lista: datos.totalVotosLista,
+      total_sufragantes: datos.totalSufragantes,
+      observaciones: datos.observaciones,
+      tiene_tachaduras: datos.tieneTachaduras,
+      hubo_reconteo: datos.huboReconteo,
+      hubo_reclamacion: datos.huboReclamacion,
+      tipo_reclamacion: datos.tipoReclamacion,
+    } as const;
   }
 
   async function enviarActaFinal(data: ActaE14Input) {
     try {
       setIsSubmitting(true);
-      // Mostrar BlockUI inicial
       showBlockUI("Preparando envío del acta...");
 
-      // Preparar datos para envío (sin cálculos automáticos)
       const datosConTotales = prepararDatosEnvio(data);
+      const camposActa = mapearDatosActa(datosConTotales);
 
       let actaId = actaExistente?.id;
 
       if (!actaId) {
         updateMessage("Creando acta...");
-        // Crear nueva acta directamente como enviada
         const acta = await crearActa.mutateAsync({
           mesa_id: datosConTotales.mesaId,
           estado: "enviado",
-          total_volantes_e11: datosConTotales.totalVolantesE11,
-          total_votos_urna: datosConTotales.totalVotosUrna,
-          total_votos_incinerados: datosConTotales.totalVotosIncinerados,
-          votos_en_blanco: datosConTotales.votosEnBlanco,
-          votos_nulos: datosConTotales.votosNulos,
-          tarjetas_no_marcadas: datosConTotales.tarjetasNoMarcadas,
-          total_votos_validos: datosConTotales.totalVotosValidos,
-          total_votos_mesa: datosConTotales.totalVotosMesa,
-          total_votos_lista: datosConTotales.totalVotosLista,
-          total_sufragantes: datosConTotales.totalSufragantes,
-          observaciones: datosConTotales.observaciones,
-          tiene_tachaduras: datosConTotales.tieneTachaduras,
-          hubo_reconteo: datosConTotales.huboReconteo,
-          hubo_reclamacion: datosConTotales.huboReclamacion,
-          tipo_reclamacion: datosConTotales.tipoReclamacion,
+          ...camposActa,
         });
         actaId = acta.id;
       } else {
         updateMessage("Actualizando acta...");
-        // Actualizar acta existente y enviar
         await actualizarActa.mutateAsync({
           id: actaId,
-          acta: {
-            estado: "enviado",
-            total_volantes_e11: datosConTotales.totalVolantesE11,
-            total_votos_urna: datosConTotales.totalVotosUrna,
-            total_votos_incinerados: datosConTotales.totalVotosIncinerados,
-            votos_en_blanco: datosConTotales.votosEnBlanco,
-            votos_nulos: datosConTotales.votosNulos,
-            tarjetas_no_marcadas: datosConTotales.tarjetasNoMarcadas,
-            total_votos_validos: datosConTotales.totalVotosValidos,
-            total_votos_mesa: datosConTotales.totalVotosMesa,
-            total_votos_lista: datosConTotales.totalVotosLista,
-            total_sufragantes: datosConTotales.totalSufragantes,
-            observaciones: datosConTotales.observaciones,
-            tiene_tachaduras: datosConTotales.tieneTachaduras,
-            hubo_reconteo: datosConTotales.huboReconteo,
-            hubo_reclamacion: datosConTotales.huboReclamacion,
-            tipo_reclamacion: datosConTotales.tipoReclamacion,
-          },
+          acta: { estado: "enviado", ...camposActa },
         });
         // Llamar al hook de enviar para triggers adicionales si los hay
         await enviarActa.mutateAsync(actaId);
       }
 
+      // A partir de aquí actaId siempre existe — sin necesidad de aserción !
+      const safeActaId = actaId;
+
       updateMessage("Guardando votos...");
-      // Guardar votos de candidatos
       await upsertVotos.mutateAsync(
         datosConTotales.votos.map((v) => ({
-          actaId,
+          actaId: safeActaId,
           candidatoId: v.candidatoId,
           votos: v.votos,
         })),
       );
 
-      // Guardar votos por lista
       await upsertVotosLista.mutateAsync(
         datosConTotales.votosPorLista.map((v) => ({
-          actaId,
+          actaId: safeActaId,
           partidoId: v.partidoId,
           votos: v.votos,
         })),
       );
 
-      // Guardar alertas activas (si las hay)
-      if (alertasArray.length > 0 && actaId) {
+      if (alertasArray.length > 0) {
         await upsertAlertas.mutateAsync(
           alertasArray.map((a) => ({
-            acta_id: actaId!,
+            acta_id: safeActaId,
             codigo: a.codigo,
             descripcion: a.descripcion,
           })),
         );
       }
 
-      // Subir fotos si hay
-      if (fotos.length > 0 && actaId) {
+      if (fotos.length > 0) {
         updateMessage(
           `Preparando ${fotos.length} foto${fotos.length > 1 ? "s" : ""}...`,
         );
         updateProgress(0, fotos.length);
-
         try {
           await subirMultiplesFotos(
             fotos,
-            actaId,
-            (current, total) => {
-              updateProgress(current, total);
-            },
-            (step) => {
-              updateMessage(step);
-            },
+            safeActaId,
+            (current, total) => updateProgress(current, total),
+            (step) => updateMessage(step),
           );
-          setFotos([]); // Limpiar fotos después de subir
+          setFotos([]);
         } catch (errorFotos) {
           console.error("Error al subir fotos:", errorFotos);
-          // No fallamos todo el envío si las fotos fallan
         }
       }
 
       updateMessage("¡Acta enviada exitosamente!");
       onSuccess?.();
-      // Dar tiempo para mostrar el mensaje de éxito antes de cerrar
-      setTimeout(() => {
-        hideBlockUI();
-      }, 1000);
+      hideBlockUIDelayed();
     } catch (error) {
       hideBlockUI();
       console.error(error);
@@ -333,23 +298,10 @@ export function FormularioE14({
       setIsSubmitting(true);
       showBlockUI("Verificando acta...");
 
-      // Preparar datos para verificación
+      const base = prepararDatosEnvio(data);
       const datosVerificacion = {
-        total_volantes_e11: data.totalVolantesE11,
-        total_votos_urna: data.totalVotosUrna,
-        total_votos_incinerados: data.totalVotosIncinerados,
-        votos_en_blanco: data.votosEnBlanco,
-        votos_nulos: data.votosNulos,
-        tarjetas_no_marcadas: data.tarjetasNoMarcadas,
-        total_votos_validos: data.totalVotosValidos,
-        total_votos_mesa: data.totalVotosMesa,
-        total_votos_lista: data.totalVotosLista,
-        total_sufragantes: data.totalSufragantes,
-        observaciones: data.observaciones,
-        tiene_tachaduras: data.tieneTachaduras,
-        hubo_reconteo: data.huboReconteo,
-        hubo_reclamacion: data.huboReclamacion,
-        tipo_reclamacion: data.tipoReclamacion,
+        ...mapearDatosActa(base),
+        observaciones_revisor: observacionesRevisor,
         votos: data.votos.map((v) => ({
           candidato_id: v.candidatoId,
           votos: v.votos,
@@ -368,9 +320,7 @@ export function FormularioE14({
 
       updateMessage("¡Acta verificada exitosamente!");
       onSuccess?.();
-      setTimeout(() => {
-        hideBlockUI();
-      }, 1000);
+      hideBlockUIDelayed();
     } catch (error) {
       hideBlockUI();
       console.error("Error al verificar acta:", error);
@@ -382,16 +332,14 @@ export function FormularioE14({
 
   return (
     <form onSubmit={handleSubmit(enviarActaFinal)} className="space-y-6">
-      {/* Estado del acta */}
       <EstadosActa
         estado={actaExistente?.estado || "borrador"}
         version={actaExistente?.version || 1}
         modoRevisor={modoRevisor}
       />
-      {/* Bloque de identificación */}
+
       <BloqueIdentificacion mesa={mesa} />
 
-      {/* Bloque de conteo */}
       <BloqueConteo
         control={control}
         register={register}
@@ -402,7 +350,7 @@ export function FormularioE14({
         errors={errors}
         isRevisor={modoRevisor}
         disabled={
-          (!puedeEditar && !modoRevisor) ||
+          (actaExistente && !modoRevisor) ||
           actaExistente?.estado === "verificado"
         }
         totales={{
@@ -412,19 +360,17 @@ export function FormularioE14({
         onAlertaChange={handleAlertaChange}
       />
 
-      {/* Bloque de evidencia */}
       <BloqueEvidencia
         actaId={actaExistente?.id}
         fotos={fotos}
         setFotos={setFotos}
-        disabled={!puedeEditar || actaExistente?.["estado"] === "verificado"}
+        disabled={!!actaExistente}
         fotosExistentes={actaExistente?.fotos}
         isRevisor={modoRevisor}
       />
 
-      {/* Acciones - Sticky en mobile */}
       {(puedeEditar || (estaEnviado && modoRevisor)) && (
-        <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 -mx-4 lg:static lg:p-0 lg:border-0 lg:mx-0">
+        <div className="mt-8 pt-6 border-t border-gray-200">
           {puedeEditar && !modoRevisor && (
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -440,7 +386,6 @@ export function FormularioE14({
 
           {modoRevisor && (
             <div className="flex flex-col gap-4">
-              {/* Observaciones del Revisor */}
               <div className="space-y-2">
                 <label
                   htmlFor="observaciones-revisor"

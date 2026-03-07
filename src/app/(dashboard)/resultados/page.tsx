@@ -7,8 +7,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { TablaResultados } from "@/components/resultados/TablaResultados";
 import { GraficoCurules } from "@/components/resultados/GraficoCurules";
 import { GraficoRepartoVotos } from "@/components/resultados/GraficoRepartoVotos";
+import { useEstadisticasGlobales } from "@/hooks/useConsolidados";
 
 export default function ResultadosPage() {
+  const { data: estadisticas, isLoading: loadingStats } =
+    useEstadisticasGlobales();
   const [municipioId, setMunicipioId] = useState<string>("");
   const { data: municipios } = useMunicipios();
   const { data: resultados, isLoading } = useResultadosElectorales(
@@ -38,7 +41,7 @@ export default function ResultadosPage() {
 
       {/* Resumen rápido */}
       {resultados && resultados.totalVotos > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           <SummaryCard
             label="Total Votos"
             value={resultados.totalVotos.toLocaleString("es-CO")}
@@ -59,26 +62,7 @@ export default function ResultadosPage() {
             }
             color="blue"
           />
-          <SummaryCard
-            label="Partidos"
-            value={String(resultados.partidos.length)}
-            icon={
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            }
-            color="gray"
-          />
+
           <SummaryCard
             label="Curules"
             value={String(resultados.totalCurules)}
@@ -102,10 +86,8 @@ export default function ResultadosPage() {
           <SummaryCard
             label="Partido Líder"
             value={
-              resultados.partidos[0]?.partido.nombre
-                ?.split(" ")
-                .slice(0, 2)
-                .join(" ") || "—"
+              resultados.partidos[0]?.partido.nombre?.split(" ").join(" ") ||
+              "—"
             }
             icon={
               <svg
@@ -127,6 +109,72 @@ export default function ResultadosPage() {
         </div>
       )}
 
+      {/* Estadísticas de mesas */}
+      {!loadingStats && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <SummaryCard
+            label="Total de Mesas"
+            value={String(estadisticas?.totalMesas || 0)}
+            icon={
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+            }
+            color="indigo"
+          />
+          <SummaryCard
+            label="Mesas Reportadas"
+            value={String(estadisticas?.mesasReportadas || 0)}
+            icon={
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            }
+            color="green"
+          />
+          <SummaryCard
+            label="% Reportado"
+            value={`${estadisticas?.porcentajeReportado || 0}%`}
+            icon={
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            }
+            color="cyan"
+          />
+        </div>
+      )}
+
       {/* Layout principal */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -144,31 +192,6 @@ export default function ResultadosPage() {
 
           {/* Panel derecho - Gráficos */}
           <aside className="p-6 space-y-6" aria-label="Gráficos de resultados">
-            {/* Reparto de Curules */}
-            <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 p-6">
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-5 flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-blue-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
-                  />
-                </svg>
-                Reparto de Curules
-              </h2>
-              <GraficoCurules
-                partidos={resultados?.partidos || []}
-                totalCurules={resultados?.totalCurules || 0}
-                isLoading={isLoading}
-              />
-            </div>
-
             {/* Reparto de Votos */}
             <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 p-6">
               <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-5 flex items-center gap-2">
@@ -232,44 +255,64 @@ function SummaryCard({
   label: string;
   value: string;
   icon: React.ReactNode;
-  color: "blue" | "gray" | "emerald" | "amber";
+  color: "blue" | "gray" | "emerald" | "amber" | "indigo" | "green" | "cyan";
 }) {
   const ObjectColors = {
     blue: {
-      bg: "bg-gradient-to-br from-blue-50 to-blue-100/50",
-      border: "border-blue-100",
-      text: "text-blue-900",
-      label: "text-blue-600/80",
-      icon: "text-blue-600 bg-blue-100/80 shadow-sm ring-1 ring-blue-200/50",
-      glow: "hover:shadow-blue-500/5",
-      pattern: "text-blue-200/40",
+      border: "border border-gray-100 border-l-4 border-l-blue-500",
+      text: "text-gray-900",
+      label: "text-gray-500",
+      icon: "text-blue-500 bg-blue-50",
+      glow: "hover:shadow-md hover:border-blue-200",
+      pattern: "text-blue-50",
     },
     gray: {
-      bg: "bg-gradient-to-br from-slate-50 to-slate-100/50",
-      border: "border-slate-100",
-      text: "text-slate-800",
-      label: "text-slate-500",
-      icon: "text-slate-600 bg-slate-100/80 shadow-sm ring-1 ring-slate-200/50",
-      glow: "hover:shadow-slate-500/5",
-      pattern: "text-slate-200/40",
+      border: "border border-gray-100 border-l-4 border-l-slate-500",
+      text: "text-gray-900",
+      label: "text-gray-500",
+      icon: "text-slate-500 bg-slate-50",
+      glow: "hover:shadow-md hover:border-slate-200",
+      pattern: "text-slate-50",
     },
     emerald: {
-      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/50",
-      border: "border-emerald-100",
-      text: "text-emerald-900",
-      label: "text-emerald-600/80",
-      icon: "text-emerald-600 bg-emerald-100/80 shadow-sm ring-1 ring-emerald-200/50",
-      glow: "hover:shadow-emerald-500/5",
-      pattern: "text-emerald-200/40",
+      border: "border border-gray-100 border-l-4 border-l-emerald-500",
+      text: "text-gray-900",
+      label: "text-gray-500",
+      icon: "text-emerald-500 bg-emerald-50",
+      glow: "hover:shadow-md hover:border-emerald-200",
+      pattern: "text-emerald-50",
     },
     amber: {
-      bg: "bg-gradient-to-br from-amber-50 to-amber-100/50",
-      border: "border-amber-100",
-      text: "text-amber-900",
-      label: "text-amber-600/90",
-      icon: "text-amber-600 bg-amber-100/80 shadow-sm ring-1 ring-amber-200/50",
-      glow: "hover:shadow-amber-500/5",
-      pattern: "text-amber-200/50",
+      border: "border border-gray-100 border-l-4 border-l-amber-500",
+      text: "text-gray-900",
+      label: "text-gray-500",
+      icon: "text-amber-500 bg-amber-50",
+      glow: "hover:shadow-md hover:border-amber-200",
+      pattern: "text-amber-50",
+    },
+    indigo: {
+      border: "border border-gray-100 border-l-4 border-l-indigo-500",
+      text: "text-gray-900",
+      label: "text-gray-500",
+      icon: "text-indigo-500 bg-indigo-50",
+      glow: "hover:shadow-md hover:border-indigo-200",
+      pattern: "text-indigo-50",
+    },
+    green: {
+      border: "border border-gray-100 border-l-4 border-l-green-500",
+      text: "text-gray-900",
+      label: "text-gray-500",
+      icon: "text-green-500 bg-green-50",
+      glow: "hover:shadow-md hover:border-green-200",
+      pattern: "text-green-50",
+    },
+    cyan: {
+      border: "border border-gray-100 border-l-4 border-l-cyan-500",
+      text: "text-gray-900",
+      label: "text-gray-500",
+      icon: "text-cyan-500 bg-cyan-50",
+      glow: "hover:shadow-md hover:border-cyan-200",
+      pattern: "text-cyan-50",
     },
   };
 
@@ -277,32 +320,32 @@ function SummaryCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border ${c.border} ${c.bg} p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${c.glow} group shadow-md flex flex-col justify-center min-h-[110px]`}
+      className={`relative overflow-hidden rounded-xl bg-white ${c.border} p-4 transition-all duration-300 hover:-translate-y-0.5 ${c.glow} group flex flex-col justify-center min-h-[85px] shadow-sm`}
     >
-      {/* Background Pattern - Official look */}
+      {/* Background Pattern */}
       <div
-        className={`absolute -right-4 -top-4 w-32 h-32 ${c.pattern} opacity-30 transform rotate-12 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 [&>svg]:w-full [&>svg]:h-full`}
+        className={`absolute -right-2 -top-2 w-24 h-24 ${c.pattern} opacity-40 transform rotate-12 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 [&>svg]:w-full [&>svg]:h-full pointer-events-none`}
       >
         {icon}
       </div>
 
-      <div className="relative flex items-center justify-between gap-4 z-10">
-        <div className="flex flex-col min-w-0">
+      <div className="relative flex items-center gap-3 z-10 w-full">
+        <div
+          className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${c.icon} transition-all duration-300 group-hover:scale-105`}
+        >
+          {icon}
+        </div>
+        <div className="flex flex-col min-w-0 flex-1">
           <p
-            className={`text-xs font-bold uppercase tracking-widest ${c.label} mb-1.5 truncate`}
+            className={`text-[11px] font-bold uppercase tracking-wider ${c.label} mb-0.5 truncate`}
           >
             {label}
           </p>
           <p
-            className={`text-3xl lg:text-4xl font-black tracking-tight ${c.text} truncate drop-shadow-sm`}
+            className={`text-xl lg:text-2xl font-black tracking-tight ${c.text} truncate`}
           >
             {value}
           </p>
-        </div>
-        <div
-          className={`p-3 rounded-xl flex items-center justify-center shrink-0 ${c.icon} backdrop-blur-sm transition-all duration-300 group-hover:scale-105`}
-        >
-          {icon}
         </div>
       </div>
     </div>

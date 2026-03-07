@@ -103,6 +103,8 @@ export async function obtenerResultadosElectorales(
         color_hex: partido.color_hex,
         activo: partido.activo,
         created_at: partido.created_at,
+        order: partido.order,
+        img: partido.img,
       },
       votosLista,
       votosCandidatos,

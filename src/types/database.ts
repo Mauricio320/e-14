@@ -345,6 +345,7 @@ export interface Database {
           img?: string;
           activo: boolean;
           created_at: string;
+          order: number;
         };
         Insert: {
           id?: string;

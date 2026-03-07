@@ -1,46 +1,46 @@
 "use client";
 
-import { useState } from "react";
 import {
-  useProfiles,
-  useCambiarRol,
-  useActivarUsuario,
-  useDesactivarUsuario,
-  useCrearUsuario,
-} from "@/hooks/useProfiles";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  crearUsuarioSchema,
-  type CrearUsuarioInput,
-} from "@/lib/validations/schemas";
-import { useMunicipios } from "@/hooks/useMunicipios";
-import {
+  useAsignacionesPorPuesto,
+  useAsignarTestigoAMesa,
+  useCrearMesa,
+  useDesasignarTestigoDeMesa,
+  useEliminarMesa,
   useMesas,
   useMesasPorPuesto,
-  useAsignarTestigoAMesa,
-  useDesasignarTestigoDeMesa,
-  useAsignacionesPorPuesto,
 } from "@/hooks/useMesas";
+import { useMunicipios } from "@/hooks/useMunicipios";
 import {
-  usePuestos,
+  useActivarUsuario,
+  useAsignarPuesto,
+  useCambiarRol,
+  useCoordinadoresPuesto,
+  useCrearUsuario,
+  useDesactivarUsuario,
+  useProfiles,
+  useRevisores,
+  useTestigos,
+} from "@/hooks/useProfiles";
+import {
   useCrearPuesto,
   useEliminarPuesto,
+  usePuestos,
   usePuestosPorMunicipio,
 } from "@/hooks/usePuestosVotacion";
-import { useCrearMesa, useEliminarMesa } from "@/hooks/useMesas";
-import {
-  useTestigos,
-  useRevisores,
-  useCoordinadoresPuesto,
-  useAsignarPuesto,
-} from "@/hooks/useProfiles";
 import {
   useAsignacionesRevisorPorMunicipio,
   useAsignarRevisorAPuesto,
   useDesasignarRevisorDePuesto,
 } from "@/hooks/useRevisores";
-import type { Profile, Role } from "@/types";
+import { createClient } from "@/lib/supabase/client";
+import {
+  crearUsuarioSchema,
+  type CrearUsuarioInput,
+} from "@/lib/validations/schemas";
+import type { Role } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<
@@ -171,19 +171,61 @@ function UsuariosTab() {
   };
 
   async function onSubmit(data: CrearUsuarioInput) {
-    try {
-      const result = await crearUsuario.mutateAsync(data);
-      console.log(result);
+    const supabase = createClient();
 
-      if (result.success) {
-        setNuevoUsuarioCreado({ email: data.email, password: data.password });
-        setShowForm(false);
-        reset();
-      }
-    } catch (error) {
-      console.error("Error creando usuario:", error);
-    }
+    const { data: puestos, error } = await supabase
+      .from("puestos_votacion")
+      .select("nombre, mesas(id, numero_mesa)");
+
+    const res = await fetch("/csvjson.json");
+    const usuarios = await res.json();
+
+    usuarios.forEach((usuario: any) => {
+      if (usuario.mesa === 0) return;
+      const mesa_id = findMesaId(puestos, usuario.name_puesto, usuario.mesa);
+    });
+
+    // try {
+    //   const result = await crearUsuario.mutateAsync(data);
+
+    //   if (result.success) {
+    //     setNuevoUsuarioCreado({ email: data.email, password: data.password });
+    //     setShowForm(false);
+    //     reset();
+    //   }
+    // } catch (error) {
+    //   console.error("Error creando usuario:", error);
+    // }
   }
+
+  const findMesaId = (puestos: any, namePuesto: string, numeroMesa: number) => {
+    // Buscar el puesto (case-insensitive, trim espacios)
+
+    const puesto = puestos.find(
+      (p: { nombre: string; mesas: { id: string; numero_mesa: number }[] }) => {
+        return (
+          p.nombre.trim().toUpperCase() === namePuesto.trim().toUpperCase()
+        );
+      },
+    );
+
+    if (!puesto) {
+      console.log(`Puesto no encontrado: "${namePuesto}"`);
+      return null;
+    }
+
+    // Buscar la mesa por numero
+    const mesa = puesto.mesas.find((m: any) => m.numero_mesa === numeroMesa);
+
+    if (!mesa) {
+      console.warn(
+        `Mesa ${numeroMesa} no encontrada en puesto "${namePuesto}"`,
+      );
+      return null;
+    }
+
+    return mesa.id;
+  };
 
   function generarPasswordTemporal() {
     const chars =
