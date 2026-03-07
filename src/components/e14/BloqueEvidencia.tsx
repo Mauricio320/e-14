@@ -2,11 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { FotoActa } from "@/types";
-import {
-  comprimirImagen,
-  formatFileSize,
-  type CompressionResult,
-} from "@/lib/image-compression";
+import { formatFileSize } from "@/lib/image-compression";
 
 // Hook para detectar si es dispositivo móvil
 function useIsMobile(): boolean {
@@ -119,12 +115,6 @@ function FotoItem({ foto }: { foto: FotoActa }) {
   );
 }
 
-interface FotoConCompression {
-  file: File;
-  compression: CompressionResult | null;
-  isCompressing: boolean;
-}
-
 interface BloqueEvidenciaProps {
   actaId?: string;
   fotos: File[];
@@ -143,10 +133,6 @@ export function BloqueEvidencia({
 }: BloqueEvidenciaProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
-  const [fotosInfo, setFotosInfo] = useState<Map<number, FotoConCompression>>(
-    new Map(),
-  );
-  const [globalCompressing, setGlobalCompressing] = useState(false);
   const isMobile = useIsMobile();
 
   const validarArchivo = (file: File): boolean => {
@@ -170,7 +156,7 @@ export function BloqueEvidencia({
   };
 
   const handleFileSelect = useCallback(
-    async (files: FileList | null) => {
+    (files: FileList | null) => {
       setError("");
 
       if (!files) return;
@@ -195,48 +181,11 @@ export function BloqueEvidencia({
         return;
       }
 
-      // Comprimir fotos antes de agregarlas
-      setGlobalCompressing(true);
-      const comprimidos: File[] = [];
-      const nuevosInfo = new Map(fotosInfo);
-
-      // Inicializar estado de compresion para cada foto
-      const startIndex = fotos.length;
-      nuevosArchivos.forEach((file, idx) => {
-        nuevosInfo.set(startIndex + idx, {
-          file,
-          compression: null,
-          isCompressing: true,
-        });
-      });
-      setFotosInfo(nuevosInfo);
-
-      // Comprimir en paralelo
-      const resultados = await Promise.all(
-        nuevosArchivos.map(async (file, idx) => {
-          const compression = await comprimirImagen(file);
-          return { idx: startIndex + idx, compression };
-        }),
-      );
-
-      // Actualizar estado con resultados
-      const finalInfo = new Map(nuevosInfo);
-      resultados.forEach(({ idx, compression }) => {
-        finalInfo.set(idx, {
-          file: compression.file,
-          compression,
-          isCompressing: false,
-        });
-        comprimidos.push(compression.file);
-      });
-      setFotosInfo(finalInfo);
-      setGlobalCompressing(false);
-
       // Usar el estado anterior a través de una referencia temporal
-      const nuevasFotos = [...fotos, ...comprimidos];
+      const nuevasFotos = [...fotos, ...nuevosArchivos];
       setFotos(nuevasFotos);
     },
-    [fotos, fotosExistentes.length, setFotos, fotosInfo],
+    [fotos, fotosExistentes.length, setFotos],
   );
 
   const handleDrop = useCallback(
@@ -262,27 +211,6 @@ export function BloqueEvidencia({
     (index: number) => {
       // 1. Usar filter en lugar de splice para evitar mutación de estado
       setFotos(fotos.filter((_, i) => i !== index));
-
-      // 2. Actualizar map de info de manera inmutable
-      setFotosInfo((prev) => {
-        const nuevoInfo = new Map<number, FotoConCompression>();
-
-        let newIndex = 0;
-        // Recorremos el original ordenadamente
-        for (let oldIndex = 0; oldIndex <= prev.size; oldIndex++) {
-          if (oldIndex === index) {
-            continue; // Saltamos el eliminado
-          }
-
-          const value = prev.get(oldIndex);
-          if (value) {
-            nuevoInfo.set(newIndex, value);
-            newIndex++;
-          }
-        }
-
-        return nuevoInfo;
-      });
     },
     [fotos, setFotos],
   );
@@ -327,7 +255,7 @@ export function BloqueEvidencia({
           <>
             {isMobile ? (
               // Versión móvil: Todo el área es clickeable para abrir cámara
-              <label className="block border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg p-6 md:p-8 text-center transition-colors min-h-[150px] flex flex-col items-center justify-center cursor-pointer bg-gray-50 hover:bg-blue-50">
+              <label className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg p-6 md:p-8 text-center transition-colors min-h-[150px] flex flex-col items-center justify-center cursor-pointer bg-gray-50 hover:bg-blue-50">
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -360,11 +288,6 @@ export function BloqueEvidencia({
                 <p className="mt-1 text-xs text-gray-500">
                   {fotos.length + fotosExistentes.length} de 14 fotos
                 </p>
-                {globalCompressing && (
-                  <p className="mt-2 text-xs text-blue-600 font-medium">
-                    Comprimiendo imágenes...
-                  </p>
-                )}
               </label>
             ) : (
               // Versión desktop: Drag & drop + selección de archivos
@@ -405,14 +328,8 @@ export function BloqueEvidencia({
                   </label>
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  JPG, PNG o WebP. Máximo 10MB por archivo (se comprimirán
-                  automáticamente). Máximo 14 fotos.
+                  JPG, PNG o WebP. Máximo 10MB por archivo. Máximo 14 fotos.
                 </p>
-                {globalCompressing && (
-                  <p className="mt-2 text-xs text-blue-600 font-medium">
-                    Comprimiendo imágenes...
-                  </p>
-                )}
               </div>
             )}
 
@@ -423,103 +340,49 @@ export function BloqueEvidencia({
               </div>
             )}
 
-            {/* Previews de fotos nuevas - Grid 2 columnas en mobile */}
             {fotos.length > 0 && (
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">
                   Fotos a subir:
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {fotos.map((foto, index) => {
-                    const info = fotosInfo.get(index);
-                    const isCompressing = info?.isCompressing ?? false;
-                    const compression = info?.compression;
-                    const wasCompressed = compression?.wasCompressed ?? false;
-
-                    return (
-                      <div key={index} className="relative group">
-                        <div className="aspect-square bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden relative">
-                          <img
-                            src={URL.createObjectURL(foto)}
-                            alt={foto.name}
-                            className="w-full h-full object-cover"
-                          />
-                          {isCompressing && (
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                              <div className="text-center text-white">
-                                <svg
-                                  className="animate-spin h-5 w-5 mx-auto mb-1"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  />
-                                </svg>
-                                <p className="text-xs">Comprimiendo...</p>
-                              </div>
-                            </div>
-                          )}
-                          {wasCompressed && !isCompressing && (
-                            <div className="absolute top-1 right-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
-                              -{compression?.compressionRatio.toFixed(0)}%
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => eliminarFoto(index)}
-                          className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
-                          aria-label="Eliminar foto"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                        <p className="text-xs text-gray-500 mt-1 truncate">
-                          {foto.name}
-                        </p>
-                        <div className="flex items-center gap-1">
-                          {wasCompressed ? (
-                            <>
-                              <span className="text-xs text-gray-400 line-through">
-                                {formatFileSize(compression?.originalSize ?? 0)}
-                              </span>
-                              <span className="text-xs text-green-600 font-medium">
-                                {formatFileSize(
-                                  compression?.compressedSize ?? 0,
-                                )}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-xs text-gray-400">
-                              {formatFileSize(foto.size)}
-                            </span>
-                          )}
-                        </div>
+                  {fotos.map((foto, index) => (
+                    <div key={index} className="relative group">
+                      <div className="aspect-square bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+                        <img
+                          src={URL.createObjectURL(foto)}
+                          alt={foto.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    );
-                  })}
+                      <button
+                        type="button"
+                        onClick={() => eliminarFoto(index)}
+                        className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                        aria-label="Eliminar foto"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        {foto.name}
+                      </p>
+                      <span className="text-xs text-gray-400">
+                        {formatFileSize(foto.size)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

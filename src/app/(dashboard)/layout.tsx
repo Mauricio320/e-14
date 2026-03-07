@@ -1,12 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import type { Profile } from "@/types";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -14,8 +13,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
 
+  // Cliente estable: se crea una sola vez y se reutiliza en todos los renders
+  const supabase = useMemo(() => createClient(), []);
+
+  // Cargar perfil del usuario al montar
   useEffect(() => {
     async function loadUser() {
       const {
@@ -38,7 +40,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
 
     loadUser();
-  }, [router, supabase]);
+  }, [supabase, router]);
+
+  // Listener para renovación automática del token y detección de sign-out
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        router.push("/login");
+      }
+      // TOKEN_REFRESHED se maneja automáticamente por @supabase/ssr
+      // Las cookies se actualizan en el middleware en cada navegación
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase, router]);
 
   if (isLoading) {
     return (

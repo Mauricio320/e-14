@@ -201,9 +201,13 @@ function UsuariosTab() {
   const findMesaId = (puestos: any, namePuesto: string, numeroMesa: number) => {
     // Buscar el puesto (case-insensitive, trim espacios)
 
-    const puesto = puestos.find((p) => {
-      return p.nombre.trim().toUpperCase() === namePuesto.trim().toUpperCase();
-    });
+    const puesto = puestos.find(
+      (p: { nombre: string; mesas: { id: string; numero_mesa: number }[] }) => {
+        return (
+          p.nombre.trim().toUpperCase() === namePuesto.trim().toUpperCase()
+        );
+      },
+    );
 
     if (!puesto) {
       console.log(`Puesto no encontrado: "${namePuesto}"`);
