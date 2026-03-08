@@ -41,8 +41,8 @@ export async function updateSession(request: NextRequest) {
   // Si hay un refresh token inválido/corrupto, limpiar las cookies de auth
   // para que el próximo login funcione limpiamente
   if (error && error.message?.includes("Refresh Token")) {
-    console.warn(
-      "Middleware: Limpiando cookies de auth corruptas:",
+    console.error(
+      "[Middleware] ERROR: Refresh Token inválido! Limpiando cookies de auth...",
       error.message,
     );
     const allCookies = request.cookies.getAll();
@@ -53,6 +53,16 @@ export async function updateSession(request: NextRequest) {
       }
     }
     return { supabaseResponse, user: null };
+  }
+
+  if (!user && request.nextUrl.pathname !== "/login") {
+    console.warn(
+      `[Middleware] No se encontró usuario para ${request.nextUrl.pathname}. ¿Quizás la sesión expiró o las cookies no llegaron?`,
+    );
+  } else if (user && request.nextUrl.pathname !== "/login") {
+    console.log(
+      `[Middleware] Usuario Autorizado: ${user.email} (${user.role}) accediendo a ${request.nextUrl.pathname}`,
+    );
   }
 
   return { supabaseResponse, user };
