@@ -22,7 +22,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     async function loadUser() {
       const {
         data: { user },
+        error,
       } = await supabase.auth.getUser();
+
+      if (error) {
+        console.warn("Error temporal obteniendo sesión:", error.message);
+        setIsLoading(false);
+        return;
+      }
 
       if (!user) {
         router.push("/login");
