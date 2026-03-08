@@ -32,7 +32,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       }
 
       if (!user) {
-        router.push("/login");
+        console.warn(
+          "Cliente: No se encontró sesión (quizás por hora desfasada). Confiando en cookies del servidor.",
+        );
+        setIsLoading(false);
         return;
       }
 
@@ -54,11 +57,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        router.push("/login");
-      }
-      // TOKEN_REFRESHED se maneja automáticamente por @supabase/ssr
-      // Las cookies se actualizan en el middleware en cada navegación
+      // El logout lo maneja Header.tsx con window.location.href
+      // No forzamos un push al /login aquí en eventos de cliente
+      // porque puede causar cierres de sesión "falsos" por desincronización de hora del PC
     });
 
     return () => subscription.unsubscribe();
