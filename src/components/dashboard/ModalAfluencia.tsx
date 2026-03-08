@@ -78,10 +78,7 @@ export function ModalAfluencia({
     >
       <div className="space-y-6">
         <p className="text-gray-600 text-sm">
-          Registra la cantidad total de votantes hasta la hora de corte.{" "}
-          <strong className="text-amber-600">
-            Solo puedes registrar el corte de la hora actual.
-          </strong>
+          Registra la cantidad total de votantes
         </p>
 
         {isLoading ? (
@@ -110,23 +107,6 @@ export function ModalAfluencia({
                     <h4 className="font-semibold text-gray-900">
                       {turno.label}
                     </h4>
-                    {guardado ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        ✓ Reportado
-                      </span>
-                    ) : estaHabilitado ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Activo ahora
-                      </span>
-                    ) : yaPaso ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-                        Cerrado
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-                        Aún no abre
-                      </span>
-                    )}
                   </div>
 
                   {guardado ? (
@@ -136,7 +116,7 @@ export function ModalAfluencia({
                         {guardado.cantidad}
                       </span>
                     </div>
-                  ) : estaHabilitado ? (
+                  ) : (
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -159,12 +139,6 @@ export function ModalAfluencia({
                       >
                         {upsertMut.isPending ? "..." : "Guardar"}
                       </button>
-                    </div>
-                  ) : (
-                    <div className="text-center p-3 text-sm text-gray-500 bg-white border rounded-lg">
-                      {yaPaso
-                        ? "El tiempo para este reporte ya finalizó."
-                        : "Podrás reportar al llegar la hora."}
                     </div>
                   )}
                 </div>
