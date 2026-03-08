@@ -40,7 +40,7 @@ import {
   type CrearUsuarioInput,
 } from "@/lib/validations/schemas";
 import type { Role } from "@/types";
-import { normalizeString } from "@/lib/utils";
+import { normalizeString, removeSpecialChars } from "@/lib/utils";
 import { Modal } from "@/components/ui/Modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -966,6 +966,7 @@ function AsignacionesTab() {
 
   const getTestigoAsignado = (mesaId: string) => {
     const asignacion = asignaciones?.find((a) => a.mesa_id === mesaId);
+
     return asignacion?.testigo || null;
   };
 

@@ -140,6 +140,10 @@ export function useAsignacionesPorPuesto(puestoId: string) {
     queryKey: [MESAS_KEY, "asignaciones", puestoId],
     queryFn: () => obtenerAsignacionesPorPuesto(puestoId),
     enabled: !!puestoId,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
 

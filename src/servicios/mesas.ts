@@ -66,6 +66,10 @@ export async function obtenerMesasPorPuesto(
       puesto:puesto_id (
         *,
         municipio:municipio_id (*)
+      ),
+      testigo_mesas (
+        *,
+        testigo:testigo_id (*)
       )
     `,
     )
@@ -178,7 +182,7 @@ export async function obtenerAsignacionesPorPuesto(
     .select(
       `
       *,
-      mesa:mesa_id (*),
+      mesa:mesa_id!inner (*),
       testigo:testigo_id (*)
     `,
     )

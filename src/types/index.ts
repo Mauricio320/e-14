@@ -36,6 +36,7 @@ export interface MesaConRelaciones extends Mesa {
   puesto?: PuestoVotacion & { municipio?: Municipio };
   actas_e14?: { estado: string }[];
   afluencia_votantes?: { cantidad: number; hora_corte: string }[];
+  testigo_mesas?: (TestigoMesa & { testigo?: Profile })[];
 }
 
 export interface ActaConRelaciones extends ActaE14 {
