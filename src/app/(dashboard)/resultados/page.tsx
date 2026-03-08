@@ -66,7 +66,7 @@ export default function ResultadosPage() {
 
           <SummaryCard
             label="Curules"
-            value={String(resultados.totalCurules)}
+            value={String(2)}
             icon={
               <svg
                 className="w-5 h-5"
