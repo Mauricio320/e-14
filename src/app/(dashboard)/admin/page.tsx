@@ -4,6 +4,7 @@ import {
   useAsignacionesPorPuesto,
   useAsignarTestigoAMesa,
   useCrearMesa,
+  useActualizarMesa,
   useDesasignarTestigoDeMesa,
   useEliminarMesa,
   useMesas,
@@ -23,6 +24,7 @@ import {
 } from "@/hooks/useProfiles";
 import {
   useCrearPuesto,
+  useActualizarPuesto,
   useEliminarPuesto,
   usePuestos,
   usePuestosPorMunicipio,
@@ -38,6 +40,8 @@ import {
   type CrearUsuarioInput,
 } from "@/lib/validations/schemas";
 import type { Role } from "@/types";
+import { normalizeString } from "@/lib/utils";
+import { Modal } from "@/components/ui/Modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -52,6 +56,8 @@ export default function AdminPage() {
     | "asignaciones_coordinadores"
   >("usuarios");
 
+  const { data: mesas, isLoading: isLoadingMesas } = useMesas();
+  const { data: puestosHeader } = usePuestos();
   return (
     <div className="space-y-6">
       <div>
@@ -59,6 +65,21 @@ export default function AdminPage() {
           Panel de Administración
         </h1>
         <p className="text-gray-600">Gestión de usuarios, puestos y mesas</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h3 className="text-gray-500 text-sm font-medium">Total Puestos</h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {puestosHeader?.length || 0}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <h3 className="text-gray-500 text-sm font-medium">Total Mesas</h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {mesas?.length || 0}
+          </p>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -171,46 +192,39 @@ function UsuariosTab() {
   };
 
   async function onSubmit(data: CrearUsuarioInput) {
-    const supabase = createClient();
-
-    const { data: puestos, error } = await supabase
-      .from("puestos_votacion")
-      .select("nombre, mesas(id, numero_mesa)");
-
-    const res = await fetch("/csvjson.json");
-    const usuarios = await res.json();
-
-    usuarios.forEach((usuario: any) => {
-      if (usuario.mesa === 0) return;
-      const mesa_id = findMesaId(puestos, usuario.name_puesto, usuario.mesa);
-    });
-
-    // try {
-    //   const result = await crearUsuario.mutateAsync(data);
-
-    //   if (result.success) {
-    //     setNuevoUsuarioCreado({ email: data.email, password: data.password });
-    //     setShowForm(false);
-    //     reset();
-    //   }
-    // } catch (error) {
-    //   console.error("Error creando usuario:", error);
-    // }
+    try {
+      const result = await crearUsuario.mutateAsync(data);
+      if (result.success) {
+        setNuevoUsuarioCreado({ email: data.email, password: data.password });
+        setShowForm(false);
+        reset();
+      }
+    } catch (error) {
+      console.error("Error creando usuario:", error);
+    }
   }
 
-  const findMesaId = (puestos: any, namePuesto: string, numeroMesa: number) => {
-    // Buscar el puesto (case-insensitive, trim espacios)
-
-    const puesto = puestos.find(
-      (p: { nombre: string; mesas: { id: string; numero_mesa: number }[] }) => {
-        return (
-          p.nombre.trim().toUpperCase() === namePuesto.trim().toUpperCase()
-        );
-      },
-    );
+  const findMesaId = (
+    puestos: any,
+    namePuesto: string,
+    numeroMesa: number,
+    nameMunicipio: string,
+  ) => {
+    // Buscar el puesto (case-insensitive, trim espacios) + municipio
+    const puesto = puestos.find((p: any) => {
+      const matchPuesto =
+        normalizeString(p.nombre) === normalizeString(namePuesto);
+      const matchMunicipio =
+        normalizeString(p.municipio?.nombre || "") ===
+        normalizeString(nameMunicipio);
+      return matchPuesto && matchMunicipio;
+    });
 
     if (!puesto) {
-      console.log(`Puesto no encontrado: "${namePuesto}"`);
+      // console.log(puestos);
+      console.log(
+        `Puesto no encontrado: "${namePuesto}" en municipio "${nameMunicipio}"`,
+      );
       return null;
     }
 
@@ -219,7 +233,7 @@ function UsuariosTab() {
 
     if (!mesa) {
       console.warn(
-        `Mesa ${numeroMesa} no encontrada en puesto "${namePuesto}"`,
+        `Mesa ${numeroMesa} no encontrada en puesto "${namePuesto}" (${puesto.municipio?.nombre})`,
       );
       return null;
     }
@@ -495,9 +509,11 @@ function PuestosTab() {
   const { data: puestos, isLoading } = usePuestos();
   const { data: municipios } = useMunicipios();
   const crearPuesto = useCrearPuesto();
+  const actualizarPuesto = useActualizarPuesto();
   const eliminarPuesto = useEliminarPuesto();
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     municipio_id: "",
     nombre: "",
@@ -505,16 +521,38 @@ function PuestosTab() {
     zona: "urbana" as "urbana" | "rural",
   });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    await crearPuesto.mutateAsync(formData);
+  const handleEdit = (puesto: any) => {
+    setEditingId(puesto.id);
+    setFormData({
+      municipio_id: puesto.municipio_id || "",
+      nombre: puesto.nombre || "",
+      direccion: puesto.direccion || "",
+      zona: puesto.zona || "urbana",
+    });
+    setShowForm(true);
+  };
+
+  const handleCancel = () => {
     setShowForm(false);
+    setEditingId(null);
     setFormData({
       municipio_id: "",
       nombre: "",
       direccion: "",
       zona: "urbana",
     });
+  };
+
+  async function handleSubmit() {
+    if (editingId) {
+      await actualizarPuesto.mutateAsync({
+        id: editingId,
+        puesto: formData,
+      });
+    } else {
+      await crearPuesto.mutateAsync(formData);
+    }
+    handleCancel();
   }
 
   if (isLoading) {
@@ -530,94 +568,107 @@ function PuestosTab() {
           Puestos de Votación
         </h2>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => setShowForm(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
-          {showForm ? "Cancelar" : "Nuevo Puesto"}
+          Nuevo Puesto
         </button>
       </div>
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-4 rounded-lg border border-gray-200 space-y-4"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Municipio
-              </label>
-              <select
-                value={formData.municipio_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, municipio_id: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              >
-                <option value="">Seleccione...</option>
-                {municipios?.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Zona
-              </label>
-              <select
-                value={formData.zona}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    zona: e.target.value as "urbana" | "rural",
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="urbana">Urbana</option>
-                <option value="rural">Rural</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre
-              </label>
-              <input
-                type="text"
-                value={formData.nombre}
-                onChange={(e) =>
-                  setFormData({ ...formData, nombre: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Dirección
-              </label>
-              <input
-                type="text"
-                value={formData.direccion}
-                onChange={(e) =>
-                  setFormData({ ...formData, direccion: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              />
-            </div>
+      <Modal
+        isOpen={showForm}
+        onClose={handleCancel}
+        title={editingId ? "Editar Puesto" : "Nuevo Puesto"}
+        footer={
+          <>
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={crearPuesto.isPending || actualizarPuesto.isPending}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {crearPuesto.isPending || actualizarPuesto.isPending
+                ? "Guardando..."
+                : editingId
+                  ? "Actualizar"
+                  : "Guardar"}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Municipio
+            </label>
+            <select
+              value={formData.municipio_id}
+              onChange={(e) =>
+                setFormData({ ...formData, municipio_id: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            >
+              <option value="">Seleccione...</option>
+              {municipios?.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
           </div>
-          <button
-            type="submit"
-            disabled={crearPuesto.isPending}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {crearPuesto.isPending ? "Guardando..." : "Guardar Puesto"}
-          </button>
-        </form>
-      )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Zona
+            </label>
+            <select
+              value={formData.zona}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  zona: e.target.value as "urbana" | "rural",
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            >
+              <option value="urbana">Urbana</option>
+              <option value="rural">Rural</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre
+            </label>
+            <input
+              type="text"
+              value={formData.nombre}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Dirección
+            </label>
+            <input
+              type="text"
+              value={formData.direccion}
+              onChange={(e) =>
+                setFormData({ ...formData, direccion: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+        </div>
+      </Modal>
 
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="overflow-x-auto">
@@ -640,7 +691,12 @@ function PuestosTab() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {puestos?.map((puesto) => (
-                <tr key={puesto.id} className="hover:bg-gray-50">
+                <tr
+                  key={puesto.id}
+                  className={`hover:bg-gray-50 transition-colors ${
+                    editingId === puesto.id ? "bg-blue-50" : ""
+                  }`}
+                >
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {puesto.nombre}
                   </td>
@@ -650,7 +706,13 @@ function PuestosTab() {
                   <td className="px-4 py-3 text-sm text-gray-600 capitalize">
                     {puesto.zona}
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm space-x-2">
+                    <button
+                      onClick={() => handleEdit(puesto)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      Editar
+                    </button>
                     <button
                       onClick={() => eliminarPuesto.mutate(puesto.id)}
                       className="text-red-600 hover:text-red-800"
@@ -672,24 +734,43 @@ function MesasTab() {
   const { data: mesas, isLoading } = useMesas();
   const { data: puestos } = usePuestos();
   const crearMesa = useCrearMesa();
+  const actualizarMesa = useActualizarMesa();
   const eliminarMesa = useEliminarMesa();
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     puesto_id: "",
     numero_mesa: 1,
     potencial_electoral: 0,
   });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    await crearMesa.mutateAsync({
-      puesto_id: formData.puesto_id,
-      numero_mesa: formData.numero_mesa,
-      potencial_electoral: formData.potencial_electoral,
+  const handleEdit = (mesa: any) => {
+    setEditingId(mesa.id);
+    setFormData({
+      puesto_id: mesa.puesto_id || "",
+      numero_mesa: mesa.numero_mesa || 1,
+      potencial_electoral: mesa.potencial_electoral || 0,
     });
+    setShowForm(true);
+  };
+
+  const handleCancel = () => {
     setShowForm(false);
+    setEditingId(null);
     setFormData({ puesto_id: "", numero_mesa: 1, potencial_electoral: 0 });
+  };
+
+  async function handleSubmit() {
+    if (editingId) {
+      await actualizarMesa.mutateAsync({
+        id: editingId,
+        mesa: formData,
+      });
+    } else {
+      await crearMesa.mutateAsync(formData);
+    }
+    handleCancel();
   }
 
   if (isLoading) {
@@ -703,85 +784,98 @@ function MesasTab() {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900">Mesas</h2>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => setShowForm(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
-          {showForm ? "Cancelar" : "Nueva Mesa"}
+          Nueva Mesa
         </button>
       </div>
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-4 rounded-lg border border-gray-200 space-y-4"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Puesto
-              </label>
-              <select
-                value={formData.puesto_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, puesto_id: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              >
-                <option value="">Seleccione...</option>
-                {puestos?.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Número de Mesa
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={formData.numero_mesa}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    numero_mesa: parseInt(e.target.value),
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Potencial Electoral
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.potencial_electoral}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    potencial_electoral: parseInt(e.target.value),
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
+      <Modal
+        isOpen={showForm}
+        onClose={handleCancel}
+        title={editingId ? "Editar Mesa" : "Nueva Mesa"}
+        footer={
+          <>
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={crearMesa.isPending || actualizarMesa.isPending}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {crearMesa.isPending || actualizarMesa.isPending
+                ? "Guardando..."
+                : editingId
+                  ? "Actualizar"
+                  : "Guardar"}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Puesto
+            </label>
+            <select
+              value={formData.puesto_id}
+              onChange={(e) =>
+                setFormData({ ...formData, puesto_id: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            >
+              <option value="">Seleccione...</option>
+              {puestos?.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre}
+                </option>
+              ))}
+            </select>
           </div>
-          <button
-            type="submit"
-            disabled={crearMesa.isPending}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {crearMesa.isPending ? "Guardando..." : "Guardar Mesa"}
-          </button>
-        </form>
-      )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Número de Mesa
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={formData.numero_mesa}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  numero_mesa: parseInt(e.target.value),
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Potencial Electoral
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.potencial_electoral}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  potencial_electoral: parseInt(e.target.value),
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+        </div>
+      </Modal>
 
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="overflow-x-auto">
@@ -807,7 +901,12 @@ function MesasTab() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {mesas?.map((mesa) => (
-                <tr key={mesa.id} className="hover:bg-gray-50">
+                <tr
+                  key={mesa.id}
+                  className={`hover:bg-gray-50 transition-colors ${
+                    editingId === mesa.id ? "bg-blue-50" : ""
+                  }`}
+                >
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                     {mesa.numero_mesa}
                   </td>
@@ -820,7 +919,13 @@ function MesasTab() {
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {mesa.potencial_electoral}
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm space-x-2">
+                    <button
+                      onClick={() => handleEdit(mesa)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      Editar
+                    </button>
                     <button
                       onClick={() => eliminarMesa.mutate(mesa.id)}
                       className="text-red-600 hover:text-red-800"
