@@ -15,8 +15,7 @@ export function Header({ profile, onMenuClick }: HeaderProps) {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    window.location.href = "/login";
   }
 
   const roleLabels: Record<string, string> = {
