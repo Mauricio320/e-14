@@ -86,7 +86,13 @@ export function TablaResultados({
               !searchTerm ||
               c.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
           )
-          .sort((a, b) => (b?.numero_lista ?? 0) - (a?.numero_lista ?? 0));
+          .sort((a, b) => {
+            const numA = a.numero_lista || 0;
+            const numB = b.numero_lista || 0;
+            if (numA === 0) return 1;
+            if (numB === 0) return -1;
+            return numA - numB;
+          });
 
         return (
           <div
