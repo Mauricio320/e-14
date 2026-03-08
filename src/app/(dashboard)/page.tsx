@@ -17,6 +17,10 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  console.log(
+    `[Server] DashboardPage acceded by user: ${user.id} (${user.email})`,
+  );
+
   const { data: profile } = (await supabase
     .from("profiles")
     .select(
