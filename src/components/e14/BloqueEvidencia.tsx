@@ -251,41 +251,73 @@ export function BloqueEvidencia({
         {!disabled && (
           <>
             {isMobile ? (
-              // Versión móvil: Todo el área es clickeable para abrir cámara
-              <label className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg p-6 md:p-8 text-center transition-colors min-h-[150px] flex flex-col items-center justify-center cursor-pointer bg-gray-50 hover:bg-blue-50">
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(e) => handleFileSelect(e.target.files)}
-                  className="hidden"
-                  capture="environment"
-                />
-                <svg
-                  className="mx-auto h-12 w-12 text-blue-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <p className="mt-3 text-base font-medium text-gray-700">
-                  Toca aquí para tomar foto
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
+              // Versión móvil: Dos botones - cámara y galería
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6 text-center bg-gray-50">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Botón Cámara */}
+                  <label className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 active:bg-blue-200 cursor-pointer transition-colors min-h-[120px]">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => handleFileSelect(e.target.files)}
+                      className="hidden"
+                      capture="environment"
+                    />
+                    <svg
+                      className="h-10 w-10 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-700">
+                      Tomar foto
+                    </span>
+                  </label>
+
+                  {/* Botón Galería */}
+                  <label className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-purple-50 border border-purple-200 hover:bg-purple-100 active:bg-purple-200 cursor-pointer transition-colors min-h-[120px]">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => handleFileSelect(e.target.files)}
+                      className="hidden"
+                    />
+                    <svg
+                      className="h-10 w-10 text-purple-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-purple-700">
+                      Galería
+                    </span>
+                  </label>
+                </div>
+                <p className="mt-3 text-xs text-gray-500">
                   {fotos.length + fotosExistentes.length} de 14 fotos
                 </p>
-              </label>
+              </div>
             ) : (
               // Versión desktop: Drag & drop + selección de archivos
               <div
