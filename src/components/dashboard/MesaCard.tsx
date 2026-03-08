@@ -14,6 +14,7 @@ interface MesaCardProps {
   isCoordinadorPuesto?: boolean;
 }
 
+//lpamsdkl
 export function MesaCard({
   mesa,
   inSend,

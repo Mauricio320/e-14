@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session) {
+      if (event === "SIGNED_OUT") {
         router.push("/login");
       }
       // TOKEN_REFRESHED se maneja automáticamente por @supabase/ssr
