@@ -210,9 +210,11 @@ export function BloqueConteo({
               <PartidoCandidatos
                 key={partidoId}
                 partido={partido}
-                candidatos={cands.sort(
-                  (a, b) => (b.numero_lista || 0) - (a.numero_lista || 0),
-                )}
+                candidatos={cands.sort((a, b) => {
+                  if (a.es_partido && !b.es_partido) return 1;
+                  if (!a.es_partido && b.es_partido) return -1;
+                  return (a.numero_lista || 0) - (b.numero_lista || 0);
+                })}
                 fields={fields}
                 listaFields={listaFields}
                 register={register}

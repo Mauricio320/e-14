@@ -216,10 +216,7 @@ export function BloqueEvidencia({
   );
 
   return (
-    <div
-      className="bg-white rounded-lg border border-gray-200 overflow-hidden"
-      hidden={isRevisor}
-    >
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <h3 className="font-medium text-gray-900">Fotos E-14</h3>
         <span className="text-sm text-gray-500">
