@@ -25,6 +25,15 @@ export async function obtenerMesas(): Promise<MesaConRelaciones[]> {
   return (data as MesaConRelaciones[]) || [];
 }
 
+export async function obtenerTotalMesas(): Promise<number> {
+  const { count, error } = await supabase
+    .from("mesas")
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw error;
+  return count || 0;
+}
+
 export async function obtenerMesaPorId(
   id: string,
 ): Promise<MesaConRelaciones | null> {

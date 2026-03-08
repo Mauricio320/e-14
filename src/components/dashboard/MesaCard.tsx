@@ -1,11 +1,13 @@
 "use client";
 
 import type { MesaConRelaciones } from "@/types";
+import Link from "next/link";
 
 interface MesaCardProps {
   mesa: MesaConRelaciones;
   inSend?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
   isRevisor?: boolean;
   status?: string;
   testigoConfirmado?: boolean;
@@ -16,6 +18,7 @@ export function MesaCard({
   mesa,
   inSend,
   onClick,
+  href,
   isRevisor,
   status,
   testigoConfirmado,
@@ -26,21 +29,20 @@ export function MesaCard({
     0;
   const cortesReportados = mesa.afluencia_votantes?.length || 0;
 
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full cursor-pointer text-left p-6 border rounded-lg hover:shadow-sm transition-all flex flex-col justify-between h-full ${
-        isRevisor
-          ? status === "verificado"
-            ? "bg-green-50 border-green-200 hover:border-green-500"
-            : status === "enviado"
-              ? "bg-orange-50 border-orange-200 hover:border-orange-500"
-              : ""
-          : inSend
-            ? "bg-green-50 border-green-200 hover:border-green-500"
-            : "bg-white border-gray-200 hover:border-blue-500"
-      }`}
-    >
+  const cardClassName = `w-full cursor-pointer text-left p-6 border rounded-lg hover:shadow-sm transition-all flex flex-col justify-between h-full ${
+    isRevisor
+      ? status === "verificado"
+        ? "bg-green-50 border-green-200 hover:border-green-500"
+        : status === "enviado"
+          ? "bg-orange-50 border-orange-200 hover:border-orange-500"
+          : ""
+      : inSend
+        ? "bg-green-50 border-green-200 hover:border-green-500"
+        : "bg-white border-gray-200 hover:border-blue-500"
+  }`;
+
+  const innerContent = (
+    <>
       <div className="flex items-start justify-between w-full">
         <div>
           <p
@@ -127,6 +129,20 @@ export function MesaCard({
           </div>
         </div>
       </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={cardClassName}>
+        {innerContent}
+      </Link>
+    );
+  }
+
+  return (
+    <button onClick={onClick} className={cardClassName}>
+      {innerContent}
     </button>
   );
 }

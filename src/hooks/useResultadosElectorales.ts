@@ -25,7 +25,6 @@ export function useResultadosElectorales(municipioId?: string) {
         },
         () => {
           setTimeout(() => {
-            console.log("Huboo cambio en el 14");
             queryClient.invalidateQueries({
               queryKey: [RESULTADOS_KEY],
             });

@@ -17,6 +17,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar, Doughnut } from "react-chartjs-2";
+import { useTotalMesas } from "@/hooks/useMesas";
 
 ChartJS.register(
   CategoryScale,
@@ -25,7 +26,7 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 interface DashboardMaestroProps {
@@ -37,6 +38,7 @@ export function DashboardMaestro({ profile }: DashboardMaestroProps) {
     useEstadisticasGlobales();
   const { data: consolidados, isLoading: loadingConsolidados } =
     useConsolidados();
+  const { data: totalMesas } = useTotalMesas();
 
   const chartOptions = {
     responsive: true,
@@ -66,7 +68,7 @@ export function DashboardMaestro({ profile }: DashboardMaestroProps) {
         label: "Pendientes",
         data:
           consolidados?.map(
-            (c) => (c.total_mesas || 0) - (c.mesas_reportadas || 0)
+            (c) => (c.total_mesas || 0) - (c.mesas_reportadas || 0),
           ) || [],
         backgroundColor: "rgba(209, 213, 219, 0.8)",
         borderRadius: 4,
@@ -80,7 +82,8 @@ export function DashboardMaestro({ profile }: DashboardMaestroProps) {
       {
         data: [
           estadisticas?.mesasReportadas || 0,
-          (estadisticas?.totalMesas || 0) - (estadisticas?.mesasReportadas || 0),
+          (estadisticas?.totalMesas || 0) -
+            (estadisticas?.mesasReportadas || 0),
         ],
         backgroundColor: ["rgba(22, 163, 74, 0.9)", "rgba(209, 213, 219, 0.9)"],
         borderWidth: 0,
@@ -120,12 +123,12 @@ export function DashboardMaestro({ profile }: DashboardMaestroProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title="Total de Mesas"
-          value={estadisticas?.totalMesas || 0}
+          value={totalMesas || 0}
           loading={loadingStats}
           icon="mesas"
         />
         <StatCard
-          title="Mesas Reportadas"
+          title="Mesas Reportadas sdas"
           value={estadisticas?.mesasReportadas || 0}
           loading={loadingStats}
           icon="reportadas"
