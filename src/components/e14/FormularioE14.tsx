@@ -318,6 +318,34 @@ export function FormularioE14({
         datos: datosVerificacion,
       });
 
+      if (alertasArray.length > 0) {
+        await upsertAlertas.mutateAsync(
+          alertasArray.map((a) => ({
+            acta_id: actaExistente.id,
+            codigo: a.codigo,
+            descripcion: a.descripcion,
+          })),
+        );
+      }
+
+      if (fotos.length > 0) {
+        updateMessage(
+          `Preparando ${fotos.length} foto${fotos.length > 1 ? "s" : ""}...`,
+        );
+        updateProgress(0, fotos.length);
+        try {
+          await subirMultiplesFotos(
+            fotos,
+            actaExistente.id,
+            (current, total) => updateProgress(current, total),
+            (step) => updateMessage(step),
+          );
+          setFotos([]);
+        } catch (errorFotos) {
+          console.error("Error al subir fotos en revisión:", errorFotos);
+        }
+      }
+
       updateMessage("¡Acta verificada exitosamente!");
       onSuccess?.();
       hideBlockUIDelayed();
@@ -364,7 +392,10 @@ export function FormularioE14({
         actaId={actaExistente?.id}
         fotos={fotos}
         setFotos={setFotos}
-        disabled={!!actaExistente}
+        disabled={
+          (!!actaExistente && !modoRevisor) ||
+          actaExistente?.estado === "verificado"
+        }
         fotosExistentes={actaExistente?.fotos}
         isRevisor={modoRevisor}
       />
