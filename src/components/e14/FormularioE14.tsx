@@ -400,7 +400,7 @@ export function FormularioE14({
         isRevisor={modoRevisor}
       />
 
-      {(puedeEditar || (estaEnviado && modoRevisor)) && (
+      {(puedeEditar || modoRevisor) && (
         <div className="mt-8 pt-6 border-t border-gray-200">
           {puedeEditar && !modoRevisor && (
             <div className="flex flex-col sm:flex-row gap-3">
@@ -435,17 +435,31 @@ export function FormularioE14({
                 />
               </div>
 
-              <button
-                hidden={modoRevisor && !estaEnviado}
-                type="button"
-                onClick={handleSubmit(handleVerificarActa)}
-                disabled={isSubmitting || verificarActaMutation.isPending}
-                className="flex-1 min-h-[48px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
-              >
-                {verificarActaMutation.isPending
-                  ? "Verificando..."
-                  : "Verificar Acta"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {actaExistente?.estado !== "verificado" && (
+                  <button
+                    type="button"
+                    onClick={handleSubmit(enviarActaFinal)}
+                    disabled={isSubmitting}
+                    className="flex-1 cursor-pointer min-h-[48px] px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {isSubmitting ? "Enviando..." : "Enviar Acta"}
+                  </button>
+                )}
+
+                {estaEnviado && (
+                  <button
+                    type="button"
+                    onClick={handleSubmit(handleVerificarActa)}
+                    disabled={isSubmitting || verificarActaMutation.isPending}
+                    className="flex-1 min-h-[48px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {verificarActaMutation.isPending
+                      ? "Verificando..."
+                      : "Verificar Acta"}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
