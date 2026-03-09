@@ -19,6 +19,7 @@ import { useUpsertVotosLista } from "@/hooks/useVotosLista";
 import { useUpsertAlertas } from "@/hooks/useAlertasActa";
 import { subirMultiplesFotos } from "@/servicios/fotos-acta";
 import { useBlockUI } from "@/contexts/BlockUIContext";
+import { createClient } from "@/lib/supabase/client";
 import type {
   MesaConRelaciones,
   ActaConRelaciones,
@@ -298,6 +299,15 @@ export function FormularioE14({
       setIsSubmitting(true);
       showBlockUI("Verificando acta...");
 
+      // Fix: Refrescar sesión antes de operaciones críticas
+      const supabase = createClient();
+      const { error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        throw new Error(
+          "Tu sesión ha expirado. Por favor, recarga la página e inicia sesión nuevamente.",
+        );
+      }
+
       const base = prepararDatosEnvio(data);
       const datosVerificacion = {
         ...mapearDatosActa(base),
@@ -350,9 +360,19 @@ export function FormularioE14({
       onSuccess?.();
       hideBlockUIDelayed();
     } catch (error) {
-      hideBlockUI();
       console.error("Error al verificar acta:", error);
-      alert("Error al verificar el acta. Por favor intente nuevamente.");
+      const mensaje =
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al verificar el acta.";
+      hideBlockUI();
+      // Usar setTimeout para que React procese el hideBlockUI antes del alert
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          alert(mensaje);
+          resolve();
+        }, 100);
+      });
     } finally {
       setIsSubmitting(false);
     }
